@@ -456,11 +456,17 @@ void ChatLog::startResizeWorker()
             workerAnchorLine = visibleLines.first();
     }
 
+    // switch to busy scene displaying the busy notification if there is a lot of text
+    int txt = 0;
+    for(ChatLine::Ptr line : lines)
+        for(ChatLineContent* content : line->content)
+            txt += content->getText().size();
+    if(txt>500000)
+        setScene(busyScene);
+
     workerLastIndex = 0;
     workerTimer->start();
 
-    // switch to busy scene displaying the busy notification
-    setScene(busyScene);
     verticalScrollBar()->hide();
 }
 
