@@ -17,6 +17,7 @@
 #ifndef FRIEND_H
 #define FRIEND_H
 
+#include <QObject>
 #include <QString>
 #include "corestructs.h"
 #include "profile.h"
@@ -24,8 +25,9 @@
 struct FriendWidget;
 class ChatForm;
 
-struct Friend
+class Friend : public QObject
 {
+    Q_OBJECT
 public:
     Friend(Profile* profile);
     Friend(const Friend& other)=delete;
@@ -40,6 +42,9 @@ public:
 
     ChatForm *getChatForm();
     FriendWidget *getFriendWidget();
+
+signals:
+    void displayedNameChanged(FriendWidget* widget, Status s, int hasNewEvents);
 
 private:
     Profile* profile

@@ -44,6 +44,7 @@ FriendWidget::FriendWidget(int FriendId, QString id)
 {
     avatar->setPixmap(QPixmap(":img/contact.svg"), Qt::transparent);
     statusPic.setPixmap(QPixmap(":img/status/dot_offline.svg"));
+    statusPic.setMargin(3);
     nameLabel->setText(id);
     nameLabel->setTextFormat(Qt::PlainText);
     statusMessageLabel->setTextFormat(Qt::PlainText);
@@ -129,16 +130,6 @@ void FriendWidget::setAsActiveChatroom()
 
     if (isDefaultAvatar)
         avatar->setPixmap(QPixmap(":img/contact_dark.svg"), Qt::transparent);
-
-    if(!historyLoaded)
-    {
-        Friend* f = FriendList::findFriend(friendId);
-        if (Settings::getInstance().getEnableLogging())
-        {
-            f->getChatForm()->loadHistory(QDateTime::currentDateTime().addDays(-7), true);
-            historyLoaded = true;
-        }
-    }
 }
 
 void FriendWidget::setAsInactiveChatroom()
@@ -170,6 +161,11 @@ void FriendWidget::updateStatusLight()
         statusPic.setPixmap(QPixmap(":img/status/dot_offline.svg"));
     else if (status == Status::Offline && f->getEventFlag() == 1)
         statusPic.setPixmap(QPixmap(":img/status/dot_offline_notification.svg"));
+
+    if (!f->getEventFlag())
+        statusPic.setMargin(3);
+    else
+        statusPic.setMargin(0);
 }
 
 void FriendWidget::setChatForm(Ui::MainWindow &ui)

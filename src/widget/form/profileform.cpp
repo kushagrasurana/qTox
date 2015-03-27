@@ -84,7 +84,7 @@ ProfileForm::ProfileForm(QWidget *parent) :
     bodyUI->qrLabel->setWordWrap(true);
 
     profilePicture = new MaskablePixmapWidget(this, QSize(64, 64), ":/img/avatar_mask.svg");
-    profilePicture->setPixmap(QPixmap(":/img/contact_dark.png"));
+    profilePicture->setPixmap(QPixmap(":/img/contact_dark.svg"));
     profilePicture->setClickable(true);
     connect(profilePicture, SIGNAL(clicked()), this, SLOT(onAvatarClicked()));
     QHBoxLayout *publicGrouplayout = qobject_cast<QHBoxLayout*>(bodyUI->publicGroup->layout());
@@ -140,7 +140,7 @@ void ProfileForm::show(Ui::MainWindow &ui)
     ui.mainContent->layout()->addWidget(this);
     head->show();
     QWidget::show();
-    bodyUI->userName->setFocus(Qt::OtherFocusReason);
+    bodyUI->userName->setFocus();
     bodyUI->userName->selectAll();
 }
 
@@ -187,7 +187,7 @@ void ProfileForm::setToxId(const QString& id)
 
 void ProfileForm::onAvatarClicked()
 {
-    QString filename = QFileDialog::getOpenFileName(this,
+    QString filename = QFileDialog::getOpenFileName(0,
         tr("Choose a profile picture"),
         QDir::homePath(),
         Nexus::getSupportedImageFilter());
