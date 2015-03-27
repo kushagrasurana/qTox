@@ -57,8 +57,29 @@ class ToxAv : public QObject
 public:
     ToxAv::ToxAv(ToxCore& tox);
     ToxAv::ToxAv();
-    
-    // TODO
+
+    uint32_t iterationInterval() const;
+    void iterate();
+
+    bool callControl(uint32_t friend_number, TOXAV_CALL_CONTROL control);
+    bool setAudioBitRate(uint32_t friend_number, uint32_t audio_bit_rate);
+    bool setVideoBitRate(uint32_t friend_number, uint32_t video_bit_rate);
+    bool sendVideoFrame(uint32_t friend_number,
+                        uint16_t width, uint16_t height,
+                        const uint8_t* y, const uint8_t* u, const uint8_t* v);
+    bool sendAudioFrame(uint32_t friend_number, const int16_t* pcm, size_t sample count,
+                                                uint8_t channels, uint32_t sampling rate);
+
+public slots:
+    bool call(uint32_t friend_number, uint32_t audio_bit_rate, uint32_t video_bit_rate);
+    bool answer(uint32_t friend_number, uint32_t audio_bit_rate, uint32_t video_bit_rate);
+
+signals:
+    void callRecevied(uint32_t friend_number, bool audio_enabled, bool video_enabled);
+    void callStateChanged(uint32_t friend_number, uint32_t state);
+    void videoFrameRequest(uint32_t friend_number);
+    void audioFrameRequest(uint32_t friend_number);
+    void videoFrameReceived(uint32_t friend_number, uint16_t width, uint16_t height, const uint8_t* planes[], const int32_t stride[]);
 
 private:
     ToxAV* toxav;
