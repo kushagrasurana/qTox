@@ -16,7 +16,6 @@
 
 #include "widget.h"
 #include "ui_mainwindow.h"
-#include "src/core.h"
 #include "src/misc/settings.h"
 #include "src/friend.h"
 #include "src/friendlist.h"
@@ -886,7 +885,7 @@ void Widget::onGroupMessageReceived(int groupnumber, int peernumber, const QStri
     if (!g)
         return;
 
-    ToxID author = Core::getInstance()->getGroupPeerToxID(groupnumber, peernumber);
+    ToxID author = Nexus::getProfile()->getGroupPeerToxID(groupnumber, peernumber);
     bool targeted = !author.isMine() && (message.contains(nameMention) || message.contains(sanitizedNameMention));
     if (targeted && !isAction)
         g->getChatForm()->addAlertMessage(author, message, QDateTime::currentDateTime());

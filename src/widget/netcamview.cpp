@@ -15,7 +15,6 @@
 */
 
 #include "netcamview.h"
-#include "src/core.h"
 #include "src/widget/videosurface.h"
 #include <QLabel>
 #include <QHBoxLayout>

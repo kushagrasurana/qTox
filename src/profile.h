@@ -18,10 +18,11 @@
 #define PROFILE_H
 
 #include "toxcore.h"
-#include "toxav.h"
-#include "friend.h"
-#include "group.h"
 
+class ToxCore;
+class ToxAv;
+class Friend;
+class Group;
 template<class K, class V> class QHash;
 
 /* No other class besides this one should call any Profile::tox functions
@@ -33,8 +34,8 @@ class Profile : public QObject
     Q_OBJECT
 
 public:
-    ToxCore tox;
-    ToxAv toxav;
+    ToxCore* tox;
+    ToxAv* toxav; // this object lives in a different thread
 
 private:
     QHash<int, Friend> friendsList;

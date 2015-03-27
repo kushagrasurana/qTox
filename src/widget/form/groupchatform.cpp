@@ -21,7 +21,6 @@
 #include "src/widget/tool/chattextedit.h"
 #include "src/widget/croppinglabel.h"
 #include "src/widget/maskablepixmapwidget.h"
-#include "src/core.h"
 #include "src/misc/style.h"
 #include <QPushButton>
 #include <QMimeData>
@@ -195,7 +194,7 @@ void GroupChatForm::dropEvent(QDropEvent *ev)
     if (ev->mimeData()->hasFormat("friend"))
     {
         int friendId = ev->mimeData()->data("friend").toInt();
-        Core::getInstance()->groupInviteFriend(friendId, group->getGroupId());
+        Nexus::getProfile()->groupInviteFriend(friendId, group->getGroupId());
     }
 }
 
@@ -205,13 +204,13 @@ void GroupChatForm::onMicMuteToggle()
     {
         if (micButton->objectName() == "red")
         {
-            Core::getInstance()->enableGroupCallMic(group->getGroupId());
+            Nexus::getProfile()->enableGroupCallMic(group->getGroupId());
             micButton->setObjectName("green");
             micButton->setToolTip(tr("Mute microphone"));
         }
         else
         {
-            Core::getInstance()->disableGroupCallMic(group->getGroupId());
+            Nexus::getProfile()->disableGroupCallMic(group->getGroupId());
             micButton->setObjectName("red");
             micButton->setToolTip(tr("Unmute microphone"));
         }
@@ -226,13 +225,13 @@ void GroupChatForm::onVolMuteToggle()
     {
         if (volButton->objectName() == "red")
         {
-            Core::getInstance()->enableGroupCallVol(group->getGroupId());
+            Nexus::getProfile()->enableGroupCallVol(group->getGroupId());
             volButton->setObjectName("green");
             volButton->setToolTip(tr("Mute call"));
         }
         else
         {
-            Core::getInstance()->disableGroupCallVol(group->getGroupId());
+            Nexus::getProfile()->disableGroupCallVol(group->getGroupId());
             volButton->setObjectName("red");
             volButton->setToolTip(tr("Unmute call"));
         }
@@ -245,7 +244,7 @@ void GroupChatForm::onCallClicked()
 {
     if (!inCall)
     {
-        Core::getInstance()->joinGroupCall(group->getGroupId());
+        Nexus::getProfile()->joinGroupCall(group->getGroupId());
         audioInputFlag = true;
         audioOutputFlag = true;
         callButton->setObjectName("red");
@@ -261,7 +260,7 @@ void GroupChatForm::onCallClicked()
     }
     else
     {
-        Core::getInstance()->leaveGroupCall(group->getGroupId());
+        Nexus::getProfile()->leaveGroupCall(group->getGroupId());
         audioInputFlag = false;
         audioOutputFlag = false;
         callButton->setObjectName("green");
@@ -282,7 +281,7 @@ void GroupChatForm::keyPressEvent(QKeyEvent* ev)
     // Push to talk (CTRL+P)
     if (ev->key() == Qt::Key_P && (ev->modifiers() & Qt::ControlModifier) && inCall)
     {
-        Core* core = Core::getInstance();
+        Core* core = Nexus::getProfile();
         if (!core->isGroupCallMicEnabled(group->getGroupId()))
         {
             core->enableGroupCallMic(group->getGroupId());
@@ -301,7 +300,7 @@ void GroupChatForm::keyReleaseEvent(QKeyEvent* ev)
     // Push to talk (CTRL+P)
     if (ev->key() == Qt::Key_P && (ev->modifiers() & Qt::ControlModifier) && inCall)
     {
-        Core* core = Core::getInstance();
+        Core* core = Nexus::getProfile();
         if (core->isGroupCallMicEnabled(group->getGroupId()))
         {
             core->disableGroupCallMic(group->getGroupId());

@@ -29,7 +29,6 @@
 #include "src/misc/settings.h"
 #include "src/widget/tool/chattextedit.h"
 #include "src/widget/maskablepixmapwidget.h"
-#include "src/core.h"
 #include "src/grouplist.h"
 #include "src/group.h"
 #include "src/friendlist.h"
@@ -222,7 +221,7 @@ void GenericChatForm::onChatContextMenuRequested(QPoint pos)
 ChatMessage::Ptr GenericChatForm::addMessage(const ToxID& author, const QString &message, bool isAction,
                                              const QDateTime &datetime, bool isSent)
 {
-    QString authorStr = author.isMine() ? Core::getInstance()->getUsername() : resolveToxID(author);
+    QString authorStr = author.isMine() ? Nexus::getProfile()->getUsername() : resolveToxID(author);
 
     ChatMessage::Ptr msg;
     if(isAction)
@@ -249,7 +248,7 @@ ChatMessage::Ptr GenericChatForm::addMessage(const ToxID& author, const QString 
 
 ChatMessage::Ptr GenericChatForm::addSelfMessage(const QString &message, bool isAction, const QDateTime &datetime, bool isSent)
 {
-    return addMessage(Core::getInstance()->getSelfId(), message, isAction, datetime, isSent);
+    return addMessage(Nexus::getProfile()->getSelfId(), message, isAction, datetime, isSent);
 }
 
 void GenericChatForm::addAlertMessage(const ToxID &author, QString message, QDateTime datetime)

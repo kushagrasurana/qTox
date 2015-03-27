@@ -18,7 +18,6 @@
 #include "smileypack.h"
 #include "src/corestructs.h"
 #include "src/misc/db/plaindb.h"
-#include "src/core.h"
 #include "src/widget/gui.h"
 #ifdef QTOX_PLATFORM_EXT
 #include "src/platform/autorun.h"

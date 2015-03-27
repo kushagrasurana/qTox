@@ -19,7 +19,6 @@
 #include "src/widget/form/settingswidget.h"
 #include "src/misc/settings.h"
 #include "src/historykeeper.h"
-#include "src/core.h"
 #include "src/widget/widget.h"
 #include "src/widget/gui.h"
 #include "src/widget/form/setpassworddialog.h"
@@ -67,7 +66,7 @@ void PrivacyForm::onTypingNotificationEnabledUpdated()
 
 bool PrivacyForm::setChatLogsPassword()
 {
-    Core* core = Core::getInstance();
+    Core* core = Nexus::getProfile();
     SetPasswordDialog* dialog;
 
     // check if an encrypted history exists because it was disabled earlier, and use it if possible
@@ -126,7 +125,7 @@ bool PrivacyForm::setChatLogsPassword()
 
 void PrivacyForm::onEncryptLogsUpdated()
 {
-    Core* core = Core::getInstance();
+    Core* core = Nexus::getProfile();
 
     if (bodyUI->cbEncryptHistory->isChecked())
     {
@@ -199,7 +198,7 @@ void PrivacyForm::onEncryptLogsUpdated()
 
 bool PrivacyForm::setToxPassword()
 {
-    Core* core = Core::getInstance();
+    Core* core = Nexus::getProfile();
     SetPasswordDialog* dialog;
     QString body = tr("Please set your new data file password.");
     if (core->isPasswordSet(Core::ptHistory))
@@ -230,7 +229,7 @@ bool PrivacyForm::setToxPassword()
 
 void PrivacyForm::onEncryptToxUpdated()
 {
-    Core* core = Core::getInstance();
+    Core* core = Nexus::getProfile();
 
     if (bodyUI->cbEncryptTox->isChecked())
     {
@@ -269,12 +268,12 @@ void PrivacyForm::setNospam()
     bool ok;
     uint32_t nospam = newNospam.toLongLong(&ok, 16);
     if (ok)
-        Core::getInstance()->setNospam(nospam);
+        Nexus::getProfile()->setNospam(nospam);
 }
 
 void PrivacyForm::present()
 {
-    bodyUI->nospamLineEdit->setText(Core::getInstance()->getSelfId().noSpam);
+    bodyUI->nospamLineEdit->setText(Nexus::getProfile()->getSelfId().noSpam);
     bodyUI->cbTypingNotification->setChecked(Settings::getInstance().isTypingNotificationEnabled());
     bodyUI->cbKeepHistory->setChecked(Settings::getInstance().getEnableLogging());
     bodyUI->cbEncryptHistory->setChecked(Settings::getInstance().getEncryptLogs());
@@ -293,8 +292,8 @@ void PrivacyForm::generateRandomNospam()
     for (int i = 0; i < 4; i++)
         newNospam = (newNospam<<8) + (qrand() % 256); // Generate byte by byte. For some reason.
 
-    Core::getInstance()->setNospam(newNospam);
-    bodyUI->nospamLineEdit->setText(Core::getInstance()->getSelfId().noSpam);
+    Nexus::getProfile()->setNospam(newNospam);
+    bodyUI->nospamLineEdit->setText(Nexus::getProfile()->getSelfId().noSpam);
 }
 
 void PrivacyForm::onNospamEdit()

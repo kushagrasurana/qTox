@@ -1,5 +1,5 @@
 #include "nexus.h"
-#include "core.h"
+#include "profile.h"
 #include "misc/settings.h"
 #include "video/camera.h"
 #include "widget/gui.h"
@@ -16,19 +16,15 @@
 static Nexus* nexus{nullptr};
 
 Nexus::Nexus(QObject *parent) :
-    QObject(parent),
-    core{nullptr},
-    coreThread{nullptr},
-    widget{nullptr},
-    androidgui{nullptr},
-    started{false}
+    QObject(parent)
 {
 }
 
 Nexus::~Nexus()
 {
-    delete core;
+    delete profile;
     delete coreThread;
+    delete avThread;
 #ifdef Q_OS_ANDROID
     delete androidgui;
 #else
@@ -47,26 +43,26 @@ void Nexus::start()
     qRegisterMetaType<vpx_image>("vpx_image");
     qRegisterMetaType<uint8_t>("uint8_t");
     qRegisterMetaType<uint16_t>("uint16_t");
+    qRegisterMetaType<uint32_t>("uint32_t");
     qRegisterMetaType<const int16_t*>("const int16_t*");
     qRegisterMetaType<int32_t>("int32_t");
     qRegisterMetaType<int64_t>("int64_t");
     qRegisterMetaType<QPixmap>("QPixmap");
     qRegisterMetaType<ToxFile>("ToxFile");
     qRegisterMetaType<ToxFile::FileDirection>("ToxFile::FileDirection");
-    qRegisterMetaType<Core::PasswordType>("Core::PasswordType");
 
     // Create GUI
 #ifndef Q_OS_ANDROID
     widget = Widget::getInstance();
 #endif
 
-    // Create Core
+    // Create Profile
     QString profilePath = Settings::getInstance().detectProfile();
     coreThread = new QThread(this);
     coreThread->setObjectName("qTox Core");
-    core = new Core(Camera::getInstance(), coreThread, profilePath);
-    core->moveToThread(coreThread);
-    connect(coreThread, &QThread::started, core, &Core::start);
+    profile = new Profile(Camera::getInstance(), coreThread, profilePath);
+    profile->moveToThread(coreThread);
+    connect(coreThread, &QThread::started, profile, &Profile::start);
 
     // Start GUI
 #ifdef Q_OS_ANDROID
@@ -79,56 +75,56 @@ void Nexus::start()
 
     // Connections
 #ifdef Q_OS_ANDROID
-    connect(core, &Core::connected, androidgui, &AndroidGUI::onConnected);
-    connect(core, &Core::disconnected, androidgui, &AndroidGUI::onDisconnected);
-    //connect(core, &Core::failedToStart, androidgui, &AndroidGUI::onFailedToStartCore);
-    //connect(core, &Core::badProxy, androidgui, &AndroidGUI::onBadProxyCore);
-    connect(core, &Core::statusSet, androidgui, &AndroidGUI::onStatusSet);
-    connect(core, &Core::usernameSet, androidgui, &AndroidGUI::setUsername);
-    connect(core, &Core::statusMessageSet, androidgui, &AndroidGUI::setStatusMessage);
-    connect(core, &Core::selfAvatarChanged, androidgui, &AndroidGUI::onSelfAvatarLoaded);
+    connect(profile, &Profile::connected, androidgui, &AndroidGUI::onConnected);
+    connect(profile, &Profile::disconnected, androidgui, &AndroidGUI::onDisconnected);
+    //connect(profile, &Profile::failedToStart, androidgui, &AndroidGUI::onFailedToStartCore);
+    //connect(profile, &Profile::badProxy, androidgui, &AndroidGUI::onBadProxyCore);
+    connect(profile, &Profile::statusSet, androidgui, &AndroidGUI::onStatusSet);
+    connect(profile, &Profile::usernameSet, androidgui, &AndroidGUI::setUsername);
+    connect(profile, &Profile::statusMessageSet, androidgui, &AndroidGUI::setStatusMessage);
+    connect(profile, &Profile::selfAvatarChanged, androidgui, &AndroidGUI::onSelfAvatarLoaded);
 
-    connect(androidgui, &AndroidGUI::statusSet, core, &Core::setStatus);
-    //connect(androidgui, &AndroidGUI::friendRequested, core, &Core::requestFriendship);
-    //connect(androidgui, &AndroidGUI::friendRequestAccepted, core, &Core::acceptFriendRequest);
-    //connect(androidgui, &AndroidGUI::changeProfile, core, &Core::switchConfiguration);
+    connect(androidgui, &AndroidGUI::statusSet, profile, &Profile::setStatus);
+    //connect(androidgui, &AndroidGUI::friendRequested, profile, &Profile::requestFriendship);
+    //connect(androidgui, &AndroidGUI::friendRequestAccepted, profile, &Profile::acceptFriendRequest);
+    //connect(androidgui, &AndroidGUI::changeProfile, profile, &Profile::switchConfiguration);
 #else
-    connect(core, &Core::connected,                  widget, &Widget::onConnected);
-    connect(core, &Core::disconnected,               widget, &Widget::onDisconnected);
-    connect(core, &Core::failedToStart,              widget, &Widget::onFailedToStartCore);
-    connect(core, &Core::badProxy,                   widget, &Widget::onBadProxyCore);
-    connect(core, &Core::statusSet,                  widget, &Widget::onStatusSet);
-    connect(core, &Core::usernameSet,                widget, &Widget::setUsername);
-    connect(core, &Core::statusMessageSet,           widget, &Widget::setStatusMessage);
-    connect(core, &Core::selfAvatarChanged,          widget, &Widget::onSelfAvatarLoaded);
-    connect(core, &Core::friendAdded,                widget, &Widget::addFriend);
-    connect(core, &Core::failedToAddFriend,          widget, &Widget::addFriendFailed);
-    connect(core, &Core::friendUsernameChanged,      widget, &Widget::onFriendUsernameChanged);
-    connect(core, &Core::friendStatusChanged,        widget, &Widget::onFriendStatusChanged);
-    connect(core, &Core::friendStatusMessageChanged, widget, &Widget::onFriendStatusMessageChanged);
-    connect(core, &Core::friendRequestReceived,      widget, &Widget::onFriendRequestReceived);
-    connect(core, &Core::friendMessageReceived,      widget, &Widget::onFriendMessageReceived);
-    connect(core, &Core::receiptRecieved,            widget, &Widget::onReceiptRecieved);
-    connect(core, &Core::groupInviteReceived,        widget, &Widget::onGroupInviteReceived);
-    connect(core, &Core::groupMessageReceived,       widget, &Widget::onGroupMessageReceived);
-    connect(core, &Core::groupNamelistChanged,       widget, &Widget::onGroupNamelistChanged);
-    connect(core, &Core::groupTitleChanged,          widget, &Widget::onGroupTitleChanged);
-    connect(core, &Core::groupPeerAudioPlaying,      widget, &Widget::onGroupPeerAudioPlaying);
-    connect(core, &Core::emptyGroupCreated, widget, &Widget::onEmptyGroupCreated);
-    connect(core, &Core::avInvite, widget, &Widget::playRingtone);
-    connect(core, &Core::blockingClearContacts, widget, &Widget::clearContactsList, Qt::BlockingQueuedConnection);
-    connect(core, &Core::friendTypingChanged, widget, &Widget::onFriendTypingChanged);
+    connect(profile, &Profile::connected,                  widget, &Widget::onConnected);
+    connect(profile, &Profile::disconnected,               widget, &Widget::onDisconnected);
+    connect(profile, &Profile::failedToStart,              widget, &Widget::onFailedToStartCore);
+    connect(profile, &Profile::badProxy,                   widget, &Widget::onBadProxyCore);
+    connect(profile, &Profile::statusSet,                  widget, &Widget::onStatusSet);
+    connect(profile, &Profile::usernameSet,                widget, &Widget::setUsername);
+    connect(profile, &Profile::statusMessageSet,           widget, &Widget::setStatusMessage);
+    connect(profile, &Profile::selfAvatarChanged,          widget, &Widget::onSelfAvatarLoaded);
+    connect(profile, &Profile::friendAdded,                widget, &Widget::addFriend);
+    connect(profile, &Profile::failedToAddFriend,          widget, &Widget::addFriendFailed);
+    connect(profile, &Profile::friendUsernameChanged,      widget, &Widget::onFriendUsernameChanged);
+    connect(profile, &Profile::friendStatusChanged,        widget, &Widget::onFriendStatusChanged);
+    connect(profile, &Profile::friendStatusMessageChanged, widget, &Widget::onFriendStatusMessageChanged);
+    connect(profile, &Profile::friendRequestReceived,      widget, &Widget::onFriendRequestReceived);
+    connect(profile, &Profile::friendMessageReceived,      widget, &Widget::onFriendMessageReceived);
+    connect(profile, &Profile::receiptRecieved,            widget, &Widget::onReceiptRecieved);
+    connect(profile, &Profile::groupInviteReceived,        widget, &Widget::onGroupInviteReceived);
+    connect(profile, &Profile::groupMessageReceived,       widget, &Widget::onGroupMessageReceived);
+    connect(profile, &Profile::groupNamelistChanged,       widget, &Widget::onGroupNamelistChanged);
+    connect(profile, &Profile::groupTitleChanged,          widget, &Widget::onGroupTitleChanged);
+    connect(profile, &Profile::groupPeerAudioPlaying,      widget, &Widget::onGroupPeerAudioPlaying);
+    connect(profile, &Profile::emptyGroupCreated, widget, &Widget::onEmptyGroupCreated);
+    connect(profile, &Profile::avInvite, widget, &Widget::playRingtone);
+    connect(profile, &Profile::blockingClearContacts, widget, &Widget::clearContactsList, Qt::BlockingQueuedConnection);
+    connect(profile, &Profile::friendTypingChanged, widget, &Widget::onFriendTypingChanged);
 
-    connect(core, SIGNAL(messageSentResult(int,QString,int)), widget, SLOT(onMessageSendResult(int,QString,int)));
-    connect(core, SIGNAL(groupSentResult(int,QString,int)), widget, SLOT(onGroupSendResult(int,QString,int)));
+    connect(profile, SIGNAL(messageSentResult(int,QString,int)), widget, SLOT(onMessageSendResult(int,QString,int)));
+    connect(profile, SIGNAL(groupSentResult(int,QString,int)), widget, SLOT(onGroupSendResult(int,QString,int)));
 
-    connect(widget, &Widget::statusSet, core, &Core::setStatus);
-    connect(widget, &Widget::friendRequested, core, &Core::requestFriendship);
-    connect(widget, &Widget::friendRequestAccepted, core, &Core::acceptFriendRequest);
-    connect(widget, &Widget::changeProfile, core, &Core::switchConfiguration);
+    connect(widget, &Widget::statusSet, profile, &Profile::setStatus);
+    connect(widget, &Widget::friendRequested, profile, &Profile::requestFriendship);
+    connect(widget, &Widget::friendRequestAccepted, profile, &Profile::acceptFriendRequest);
+    connect(widget, &Widget::changeProfile, profile, &Profile::switchConfiguration);
 #endif
 
-    // Start Core
+    // Start Profile
     coreThread->start();
 
     started = true;
@@ -147,9 +143,9 @@ void Nexus::destroyInstance()
     nexus = nullptr;
 }
 
-Core* Nexus::getCore()
+Profile* Nexus::getProfile()
 {
-    return getInstance().core;
+    return getInstance().profile;
 }
 
 AndroidGUI* Nexus::getAndroidGUI()

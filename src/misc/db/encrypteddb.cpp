@@ -16,7 +16,6 @@
 
 #include "encrypteddb.h"
 #include "src/misc/settings.h"
-#include "src/core.h"
 
 #include <tox/toxencryptsave.h>
 
@@ -86,7 +85,7 @@ bool EncryptedDb::pullFileContent(const QString &fname, QByteArray &buf)
     {
         QByteArray encrChunk = dbFile.read(encryptedChunkSize);
         qDebug() << "EncryptedDb::pullFileContent: got chunk:" << encrChunk.size();
-        buf = Core::getInstance()->decryptData(encrChunk, Core::ptHistory);
+        buf = Nexus::getProfile()->decryptData(encrChunk, Core::ptHistory);
         if (buf.size() > 0)
         {
             fileContent += buf;
@@ -130,7 +129,7 @@ void EncryptedDb::appendToEncrypted(const QString &sql)
     {
         QByteArray filledChunk = buffer.left(plainChunkSize);
         encrFile.seek(chunkPosition * encryptedChunkSize);
-        QByteArray encr = Core::getInstance()->encryptData(filledChunk, Core::ptHistory);
+        QByteArray encr = Nexus::getProfile()->encryptData(filledChunk, Core::ptHistory);
         if (encr.size() > 0)
         {
             encrFile.write(encr);
@@ -142,7 +141,7 @@ void EncryptedDb::appendToEncrypted(const QString &sql)
     }
     encrFile.seek(chunkPosition * encryptedChunkSize);
 
-    QByteArray encr = Core::getInstance()->encryptData(buffer, Core::ptHistory);
+    QByteArray encr = Nexus::getProfile()->encryptData(buffer, Core::ptHistory);
     if (encr.size() > 0)
     {
         encrFile.write(encr);
@@ -159,7 +158,7 @@ bool EncryptedDb::check(const QString &fname)
     if (file.size() > 0)
     {
         QByteArray encrChunk = file.read(encryptedChunkSize);
-        QByteArray buf = Core::getInstance()->decryptData(encrChunk, Core::ptHistory);
+        QByteArray buf = Nexus::getProfile()->decryptData(encrChunk, Core::ptHistory);
         if (buf.size() == 0)
         {
             state = false;

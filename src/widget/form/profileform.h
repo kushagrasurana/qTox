@@ -21,7 +21,6 @@
 #include <QLabel>
 #include <QTimer>
 #include <QVBoxLayout>
-#include "src/core.h"
 #include "src/misc/qrwidget.h"
 
 class CroppingLabel;

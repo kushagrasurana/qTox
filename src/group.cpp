@@ -19,7 +19,7 @@
 #include "widget/form/groupchatform.h"
 #include "friendlist.h"
 #include "friend.h"
-#include "core.h"
+
 #include "widget/gui.h"
 #include <QDebug>
 #include <QTimer>
@@ -68,7 +68,7 @@ void Group::removePeer(int peerId)
 
 void Group::updatePeer(int peerId, QString name)
 {
-    ToxID id = Core::getInstance()->getGroupPeerToxID(groupId, peerId);
+    ToxID id = Nexus::getProfile()->getGroupPeerToxID(groupId, peerId);
     QString toxid = id.publicKey;
     peers[peerId] = name;
     toxids[toxid] = name;
@@ -94,12 +94,12 @@ void Group::setName(const QString& name)
 
 void Group::regeneratePeerList()
 {
-    peers = Core::getInstance()->getGroupPeerNames(groupId);
+    peers = Nexus::getProfile()->getGroupPeerNames(groupId);
     toxids.clear();
     nPeers = peers.size();
     for (int i = 0; i < nPeers; i++)
     {
-        ToxID id = Core::getInstance()->getGroupPeerToxID(groupId, i);
+        ToxID id = Nexus::getProfile()->getGroupPeerToxID(groupId, i);
         if (id.isMine())
             selfPeerNum = i;
         QString toxid = id.publicKey;

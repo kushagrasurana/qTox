@@ -19,11 +19,10 @@
 #include "widget/friendwidget.h"
 #include "widget/form/chatform.h"
 #include "widget/gui.h"
-#include "src/core.h"
 #include "src/misc/settings.h"
 
 Friend::Friend(int FriendId, const ToxID &UserId)
-    : userName{Core::getInstance()->getPeerName(UserId)},
+    : userName{Nexus::getProfile()->getPeerName(UserId)},
       userID{UserId}, friendId{FriendId}
 {
     hasNewEvents = 0;

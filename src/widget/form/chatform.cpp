@@ -24,7 +24,6 @@
 #include <QDragEnterEvent>
 #include <QBitmap>
 #include "chatform.h"
-#include "src/core.h"
 #include "src/friend.h"
 #include "src/historykeeper.h"
 #include "src/misc/style.h"
@@ -78,7 +77,7 @@ ChatForm::ChatForm(Friend* chatFriend)
 
     menu.addAction(tr("Load chat history..."), this, SLOT(onLoadHistory()));
 
-    connect(Core::getInstance(), &Core::fileSendStarted, this, &ChatForm::startFileSend);
+    connect(Nexus::getProfile(), &Core::fileSendStarted, this, &ChatForm::startFileSend);
     connect(sendButton, &QPushButton::clicked, this, &ChatForm::onSendTriggered);
     connect(fileButton, &QPushButton::clicked, this, &ChatForm::onAttachClicked);
     connect(callButton, &QPushButton::clicked, this, &ChatForm::onCallTriggered);
@@ -87,9 +86,9 @@ ChatForm::ChatForm(Friend* chatFriend)
     connect(msgEdit, &ChatTextEdit::textChanged, this, &ChatForm::onTextEditChanged);
     connect(micButton, SIGNAL(clicked()), this, SLOT(onMicMuteToggle()));
     connect(volButton, SIGNAL(clicked()), this, SLOT(onVolMuteToggle()));
-    connect(Core::getInstance(), &Core::fileSendFailed, this, &ChatForm::onFileSendFailed);
+    connect(Nexus::getProfile(), &Core::fileSendFailed, this, &ChatForm::onFileSendFailed);
     connect(this, SIGNAL(chatAreaCleared()), getOfflineMsgEngine(), SLOT(removeAllReciepts()));
-    connect(&typingTimer, &QTimer::timeout, this, [=]{Core::getInstance()->sendTyping(f->getFriendID(), false);});
+    connect(&typingTimer, &QTimer::timeout, this, [=]{Nexus::getProfile()->sendTyping(f->getFriendID(), false);});
     connect(nameLabel, &CroppingLabel::textChanged, this, [=](QString text, QString orig) {
         if (text != orig) emit aliasChanged(text);
     } );
@@ -135,15 +134,15 @@ void ChatForm::onSendTriggered()
             qt_msg_hist = "/me " + qt_msg;
 
         int id = HistoryKeeper::getInstance()->addChatEntry(f->getToxID().publicKey, qt_msg_hist,
-                                                            Core::getInstance()->getSelfId().publicKey, timestamp, status);
+                                                            Nexus::getProfile()->getSelfId().publicKey, timestamp, status);
 
         ChatMessage::Ptr ma = addSelfMessage(qt_msg, isAction, timestamp, false);
 
         int rec;
         if (isAction)
-            rec = Core::getInstance()->sendAction(f->getFriendID(), qt_msg);
+            rec = Nexus::getProfile()->sendAction(f->getFriendID(), qt_msg);
         else
-            rec = Core::getInstance()->sendMessage(f->getFriendID(), qt_msg);
+            rec = Nexus::getProfile()->sendMessage(f->getFriendID(), qt_msg);
 
         getOfflineMsgEngine()->registerReceipt(rec, id, ma);
     }
@@ -156,7 +155,7 @@ void ChatForm::onTextEditChanged()
     if (!Settings::getInstance().isTypingNotificationEnabled())
     {
         if (isTyping)
-            Core::getInstance()->sendTyping(f->getFriendID(), false);
+            Nexus::getProfile()->sendTyping(f->getFriendID(), false);
         isTyping = false;
         return;
     }
@@ -165,11 +164,11 @@ void ChatForm::onTextEditChanged()
     {
         typingTimer.start(3000);
         if (!isTyping)
-            Core::getInstance()->sendTyping(f->getFriendID(), (isTyping = true));
+            Nexus::getProfile()->sendTyping(f->getFriendID(), (isTyping = true));
     }
     else
     {
-        Core::getInstance()->sendTyping(f->getFriendID(), (isTyping = false));
+        Nexus::getProfile()->sendTyping(f->getFriendID(), (isTyping = false));
     }
 }
 
@@ -208,7 +207,7 @@ void ChatForm::startFileSend(ToxFile file)
     QString name;
     if (!previousId.isMine())
     {
-        Core* core = Core::getInstance();
+        Core* core = Nexus::getProfile();
         name = core->getUsername();
         previousId = core->getSelfId();
     }
@@ -328,7 +327,7 @@ void ChatForm::onAvStart(int FriendId, int CallId, bool video)
         connect(videoButton, SIGNAL(clicked()),
                 this, SLOT(onHangupCallTriggered()));
 
-        netcam->show(Core::getInstance()->getVideoSourceFromCall(CallId), f->getDisplayedName());
+        netcam->show(Nexus::getProfile()->getVideoSourceFromCall(CallId), f->getDisplayedName());
     }
     else
     {
@@ -445,7 +444,7 @@ void ChatForm::onAvStarting(int FriendId, int CallId, bool video)
         videoButton->setToolTip(tr("End video call"));
         connect(videoButton, SIGNAL(clicked()), this, SLOT(onHangupCallTriggered()));
 
-        netcam->show(Core::getInstance()->getVideoSourceFromCall(CallId), f->getDisplayedName());
+        netcam->show(Nexus::getProfile()->getVideoSourceFromCall(CallId), f->getDisplayedName());
     }
     else
     {
@@ -535,7 +534,7 @@ void ChatForm::onAvMediaChange(int FriendId, int CallId, bool video)
 
     if (video)
     {
-        netcam->show(Core::getInstance()->getVideoSourceFromCall(CallId), f->getDisplayedName());
+        netcam->show(Nexus::getProfile()->getVideoSourceFromCall(CallId), f->getDisplayedName());
     }
     else
     {
@@ -782,7 +781,7 @@ void ChatForm::dropEvent(QDropEvent *ev)
             file.close();
 
             if (info.exists())
-                Core::getInstance()->sendFile(f->getFriendID(), info.fileName(), info.absoluteFilePath(), info.size());
+                Nexus::getProfile()->sendFile(f->getFriendID(), info.fileName(), info.absoluteFilePath(), info.size());
         }
     }
 }
@@ -835,7 +834,7 @@ void ChatForm::loadHistory(QDateTime since, bool processUndelivered)
 
         // Show each messages
         ToxID authorId = ToxID::fromString(it.sender);
-        QString authorStr = authorId.isMine() ? Core::getInstance()->getUsername() : resolveToxID(authorId);
+        QString authorStr = authorId.isMine() ? Nexus::getProfile()->getUsername() : resolveToxID(authorId);
         bool isAction = it.message.startsWith("/me ");
 
         ChatMessage::Ptr msg = ChatMessage::createChatMessage(authorStr,
@@ -859,9 +858,9 @@ void ChatForm::loadHistory(QDateTime since, bool processUndelivered)
             {
                 int rec;
                 if (!isAction)
-                    rec = Core::getInstance()->sendMessage(f->getFriendID(), msg->toString());
+                    rec = Nexus::getProfile()->sendMessage(f->getFriendID(), msg->toString());
                 else
-                    rec = Core::getInstance()->sendAction(f->getFriendID(), msg->toString());
+                    rec = Nexus::getProfile()->sendAction(f->getFriendID(), msg->toString());
                 
                 getOfflineMsgEngine()->registerReceipt(rec, it.id, msg);
             }

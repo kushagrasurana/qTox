@@ -14,7 +14,7 @@
     See the COPYING file for more details.
 */
 
-#include "core.h"
+
 #include "video/camera.h"
 #include "audio.h"
 #ifdef QTOX_FILTER_AUDIO
@@ -221,7 +221,7 @@ void Core::cleanupCall(int callId)
     if (calls[callId].videoEnabled)
         Camera::getInstance()->unsubscribe();
     Audio::unsuscribeInput();
-    toxav_kill_transmission(Core::getInstance()->toxav, callId);
+    toxav_kill_transmission(Nexus::getProfile()->toxav, callId);
 }
 
 void Core::playCallAudio(void* toxav, int32_t callId, const int16_t *data, uint16_t samples, void *user_data)
@@ -603,7 +603,7 @@ void Core::joinGroupCall(int groupId)
     Audio::suscribeInput();
 
     // Go
-    Core* core = Core::getInstance();
+    Core* core = Nexus::getProfile();
     ToxAv* toxav = core->toxav;
 
     groupCalls[groupId].sendAudioTimer = new QTimer();

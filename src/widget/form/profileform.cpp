@@ -14,7 +14,6 @@
     See the COPYING file for more details.
 */
 
-#include "src/core.h"
 #include "src/nexus.h"
 #include "ui_profileform.h"
 #include "profileform.h"
@@ -51,7 +50,7 @@ ProfileForm::ProfileForm(QWidget *parent) :
 {
     bodyUI = new Ui::IdentitySettings;
     bodyUI->setupUi(this);
-    core = Core::getInstance();
+    core = Nexus::getProfile();
 
     head = new QWidget(this);
     QHBoxLayout* headLayout = new QHBoxLayout();
@@ -162,12 +161,12 @@ void ProfileForm::copyIdClicked()
 
 void ProfileForm::onUserNameEdited()
 {
-    Core::getInstance()->setUsername(bodyUI->userName->text());
+    Nexus::getProfile()->setUsername(bodyUI->userName->text());
 }
 
 void ProfileForm::onStatusMessageEdited()
 {
-    Core::getInstance()->setStatusMessage(bodyUI->statusMessage->text());
+    Nexus::getProfile()->setStatusMessage(bodyUI->statusMessage->text());
 }
 
 void ProfileForm::onSelfAvatarLoaded(const QPixmap& pic)
@@ -236,7 +235,7 @@ void ProfileForm::onLoadClicked()
 {
     if (bodyUI->profiles->currentText() != Settings::getInstance().getCurrentProfile())
     {
-        if (Core::getInstance()->anyActiveCalls())
+        if (Nexus::getProfile()->anyActiveCalls())
             GUI::showWarning(tr("Call active", "popup title"),
                 tr("You can't switch profiles while a call is active!", "popup text"));
         else

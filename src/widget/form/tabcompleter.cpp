@@ -19,7 +19,6 @@
    was greatly simplified for use in qTox. */
 
 #include "tabcompleter.h"
-#include "src/core.h"
 #include "src/group.h"
 #include "src/widget/tool/chattextedit.h"
 #include <QRegExp>
@@ -106,7 +105,7 @@ void TabCompleter::reset()
 // this determines the sort order
 bool TabCompleter::SortableString::operator<(const SortableString &other) const
 {
-    QString name = Core::getInstance()->getUsername();
+    QString name = Nexus::getProfile()->getUsername();
     if (this->contents == name)
         return false;
     else if (other.contents == name)

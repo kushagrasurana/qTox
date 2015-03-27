@@ -4,7 +4,7 @@
 #include <QObject>
 
 class QThread;
-class Core;
+class Profile;
 class Widget;
 class AndroidGUI;
 
@@ -19,7 +19,7 @@ public:
 
     static Nexus& getInstance();
     static void destroyInstance();
-    static Core* getCore(); ///< Will return 0 if not started
+    static Profile* getProfile(); ///< Will return 0 if not started
     static AndroidGUI* getAndroidGUI(); ///< Will return 0 if not started
     static Widget* getDesktopGUI(); ///< Will return 0 if not started
     static QString getSupportedImageFilter();
@@ -30,11 +30,12 @@ private:
     ~Nexus();
 
 private:
-    Core* core;
-    QThread* coreThread;
-    Widget* widget;
-    AndroidGUI* androidgui;
-    bool started;
+    Profile* profile = nullptr; // in the future this may be multiple profiles
+    QThread* coreThread = nullptr;
+    QThread* avThread = nullptr;
+    Widget* widget = nullptr;
+    AndroidGUI* androidgui = nullptr;
+    bool started = false;
 };
 
 #endif // NEXUS_H

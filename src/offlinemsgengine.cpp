@@ -18,7 +18,6 @@
 #include "src/friend.h"
 #include "src/historykeeper.h"
 #include "src/misc/settings.h"
-#include "src/core.h"
 #include <QMutexLocker>
 #include <QTimer>
 
@@ -88,9 +87,9 @@ void OfflineMsgEngine::deliverOfflineMsgs()
         QString messageText = iter.value().msg->toString();
         int rec;
         if (iter.value().msg->isAction())
-            rec = Core::getInstance()->sendAction(f->getFriendID(), messageText);
+            rec = Nexus::getProfile()->sendAction(f->getFriendID(), messageText);
         else
-            rec = Core::getInstance()->sendMessage(f->getFriendID(), messageText);
+            rec = Nexus::getProfile()->sendMessage(f->getFriendID(), messageText);
         registerReceipt(rec, iter.key(), iter.value().msg);
     }
 }

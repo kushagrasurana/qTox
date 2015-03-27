@@ -24,7 +24,6 @@
 #define FIX_SND_PCM_PREPARE_BUG 0
 
 #include "audio.h"
-#include "src/core.h"
 
 #include <QDebug>
 #include <QThread>
@@ -137,7 +136,7 @@ void Audio::openInput(const QString& inDevDescr)
     else
         qDebug() << "Audio: Opening audio input "<<inDevDescr;
 
-    Core::getInstance()->resetCallSources(); // Force to regen each group call's sources
+    Nexus::getProfile()->resetCallSources(); // Force to regen each group call's sources
 
     // Restart the capture if necessary
     if (userCount.load() != 0 && alInDev)
@@ -186,7 +185,7 @@ void Audio::openOutput(const QString& outDevDescr)
         qDebug() << "Audio: Opening audio output "<<outDevDescr;
     }
 
-    Core::getInstance()->resetCallSources(); // Force to regen each group call's sources
+    Nexus::getProfile()->resetCallSources(); // Force to regen each group call's sources
 }
 
 void Audio::closeInput()

@@ -20,7 +20,6 @@
 #include "groupwidget.h"
 #include "src/friendlist.h"
 #include "src/friend.h"
-#include "src/core.h"
 #include "form/chatform.h"
 #include "maskablepixmapwidget.h"
 #include "croppinglabel.h"
@@ -119,7 +118,7 @@ void FriendWidget::contextMenuEvent(QContextMenuEvent * event)
         else if (groupActions.contains(selectedItem))
         {
             Group* group = groupActions[selectedItem];
-            Core::getInstance()->groupInviteFriend(friendId, group->getGroupId());
+            Nexus::getProfile()->groupInviteFriend(friendId, group->getGroupId());
         }
     }
 }

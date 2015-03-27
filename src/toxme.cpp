@@ -1,5 +1,5 @@
 #include "toxme.h"
-#include "core.h"
+
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
 #include <QCoreApplication>
@@ -28,7 +28,7 @@ QByteArray Toxme::makeJsonRequest(QString json)
 
 QByteArray Toxme::prepareEncryptedJson(int action, QString payload)
 {
-    QPair<QByteArray, QByteArray> keypair = Core::getInstance()->getKeypair();
+    QPair<QByteArray, QByteArray> keypair = Nexus::getProfile()->getKeypair();
     if (keypair.first.isEmpty() || keypair.second.isEmpty())
     {
         qWarning() << "Toxme::prepareEncryptedJson: Couldn't get our keypair, aborting";

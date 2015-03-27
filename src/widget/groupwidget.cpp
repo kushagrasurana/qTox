@@ -21,7 +21,6 @@
 #include "form/groupchatform.h"
 #include "maskablepixmapwidget.h"
 #include "src/misc/style.h"
-#include "src/core.h"
 #include <QPalette>
 #include <QMenu>
 #include <QContextMenuEvent>
@@ -143,7 +142,7 @@ void GroupWidget::dropEvent(QDropEvent *ev)
     if (ev->mimeData()->hasFormat("friend"))
     {
         int friendId = ev->mimeData()->data("friend").toInt();
-        Core::getInstance()->groupInviteFriend(friendId, groupId);
+        Nexus::getProfile()->groupInviteFriend(friendId, groupId);
     }
 }
 

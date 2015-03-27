@@ -289,8 +289,6 @@ contains(ENABLE_SYSTRAY_GTK_BACKEND, NO) {
     HEADERS  += \
         src/friend.h \
         src/group.h \
-        src/grouplist.h \
-        src/friendlist.h \
         src/misc/smileypack.h \
         src/widget/emoticonswidget.h \
         src/misc/style.h \
@@ -375,9 +373,7 @@ contains(ENABLE_SYSTRAY_GTK_BACKEND, NO) {
         src/widget/form/groupchatform.cpp \
         src/widget/form/genericchatform.cpp \
         src/friend.cpp \
-        src/friendlist.cpp \
         src/group.cpp \
-        src/grouplist.cpp \
         src/misc/smileypack.cpp \
         src/widget/emoticonswidget.cpp \
         src/misc/style.cpp \

@@ -18,7 +18,6 @@
 #include "ui_filetransferwidget.h"
 
 #include "src/nexus.h"
-#include "src/core.h"
 #include "src/misc/style.h"
 #include "src/widget/widget.h"
 
@@ -72,11 +71,11 @@ FileTransferWidget::FileTransferWidget(QWidget *parent, ToxFile file)
 
     setBackgroundColor(Style::getColor(Style::LightGrey), false);
 
-    connect(Core::getInstance(), &Core::fileTransferInfo, this, &FileTransferWidget::onFileTransferInfo);
-    connect(Core::getInstance(), &Core::fileTransferAccepted, this, &FileTransferWidget::onFileTransferAccepted);
-    connect(Core::getInstance(), &Core::fileTransferCancelled, this, &FileTransferWidget::onFileTransferCancelled);
-    connect(Core::getInstance(), &Core::fileTransferPaused, this, &FileTransferWidget::onFileTransferPaused);
-    connect(Core::getInstance(), &Core::fileTransferFinished, this, &FileTransferWidget::onFileTransferFinished);
+    connect(Nexus::getProfile(), &Core::fileTransferInfo, this, &FileTransferWidget::onFileTransferInfo);
+    connect(Nexus::getProfile(), &Core::fileTransferAccepted, this, &FileTransferWidget::onFileTransferAccepted);
+    connect(Nexus::getProfile(), &Core::fileTransferCancelled, this, &FileTransferWidget::onFileTransferCancelled);
+    connect(Nexus::getProfile(), &Core::fileTransferPaused, this, &FileTransferWidget::onFileTransferPaused);
+    connect(Nexus::getProfile(), &Core::fileTransferFinished, this, &FileTransferWidget::onFileTransferFinished);
 
     setupButtons();
 
@@ -115,7 +114,7 @@ void FileTransferWidget::autoAcceptTransfer(const QString &path)
     //Do not automatically accept the file-transfer if the path is not writable.
     //The user can still accept it manually.
     if (Nexus::isFilePathWritable(filepath))
-        Core::getInstance()->acceptFileRecvRequest(fileInfo.friendId, fileInfo.fileNum, filepath);
+        Nexus::getProfile()->acceptFileRecvRequest(fileInfo.friendId, fileInfo.fileNum, filepath);
     else
         qDebug() << "Warning: Cannot write to " << filepath;
 }
@@ -135,7 +134,7 @@ void FileTransferWidget::acceptTransfer(const QString &filepath)
     }
 
     //everything ok!
-    Core::getInstance()->acceptFileRecvRequest(fileInfo.friendId, fileInfo.fileNum, filepath);
+    Nexus::getProfile()->acceptFileRecvRequest(fileInfo.friendId, fileInfo.fileNum, filepath);
 }
 
 void FileTransferWidget::setBackgroundColor(const QColor &c, bool whiteFont)
@@ -283,7 +282,7 @@ void FileTransferWidget::onFileTransferCancelled(ToxFile file)
     setupButtons();
     hideWidgets();
 
-    disconnect(Core::getInstance(), 0, this, 0);
+    disconnect(Nexus::getProfile(), 0, this, 0);
 }
 
 void FileTransferWidget::onFileTransferPaused(ToxFile file)
@@ -330,7 +329,7 @@ void FileTransferWidget::onFileTransferFinished(ToxFile file)
     if(fileInfo.direction == ToxFile::RECEIVING)
         showPreview(fileInfo.filePath);
 
-    disconnect(Core::getInstance(), 0, this, 0);
+    disconnect(Nexus::getProfile(), 0, this, 0);
 }
 
 QString FileTransferWidget::getHumanReadableSize(qint64 size)
@@ -401,20 +400,20 @@ void FileTransferWidget::handleButton(QPushButton *btn)
     if(fileInfo.direction == ToxFile::SENDING)
     {
         if(btn->objectName() == "cancel")
-            Core::getInstance()->cancelFileSend(fileInfo.friendId, fileInfo.fileNum);
+            Nexus::getProfile()->cancelFileSend(fileInfo.friendId, fileInfo.fileNum);
         else if(btn->objectName() == "pause")
-            Core::getInstance()->pauseResumeFileSend(fileInfo.friendId, fileInfo.fileNum);
+            Nexus::getProfile()->pauseResumeFileSend(fileInfo.friendId, fileInfo.fileNum);
         else if(btn->objectName() == "resume")
-            Core::getInstance()->pauseResumeFileSend(fileInfo.friendId, fileInfo.fileNum);
+            Nexus::getProfile()->pauseResumeFileSend(fileInfo.friendId, fileInfo.fileNum);
     }
     else
     {
         if(btn->objectName() == "cancel")
-            Core::getInstance()->cancelFileRecv(fileInfo.friendId, fileInfo.fileNum);
+            Nexus::getProfile()->cancelFileRecv(fileInfo.friendId, fileInfo.fileNum);
         else if(btn->objectName() == "pause")
-            Core::getInstance()->pauseResumeFileRecv(fileInfo.friendId, fileInfo.fileNum);
+            Nexus::getProfile()->pauseResumeFileRecv(fileInfo.friendId, fileInfo.fileNum);
         else if(btn->objectName() == "resume")
-            Core::getInstance()->pauseResumeFileRecv(fileInfo.friendId, fileInfo.fileNum);
+            Nexus::getProfile()->pauseResumeFileRecv(fileInfo.friendId, fileInfo.fileNum);
         else if(btn->objectName() == "accept")
         {
             QString path = QFileDialog::getSaveFileName(0, tr("Save a file","Title of the file saving dialog"), QDir::home().filePath(fileInfo.fileName));

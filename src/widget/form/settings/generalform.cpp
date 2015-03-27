@@ -20,7 +20,6 @@
 #include "src/widget/widget.h"
 #include "src/misc/settings.h"
 #include "src/misc/smileypack.h"
-#include "src/core.h"
 #include "src/misc/style.h"
 #include <QMessageBox>
 #include <QStyleFactory>
@@ -349,7 +348,7 @@ void GeneralForm::onUseProxyUpdated()
 
 void GeneralForm::onReconnectClicked()
 {
-    if (Core::getInstance()->anyActiveCalls())
+    if (Nexus::getProfile()->anyActiveCalls())
         QMessageBox::warning(this, tr("Call active", "popup title"),
            tr("You can't disconnect while a call is active!", "popup text"));
     else

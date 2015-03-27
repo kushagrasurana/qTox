@@ -1,5 +1,4 @@
 #include "src/corestructs.h"
-#include "src/core.h"
 #include <tox/tox.h>
 #include <QFile>
 #include <QRegularExpression>
@@ -67,7 +66,7 @@ bool ToxID::operator!=(const ToxID& other) const
 
 bool ToxID::isMine() const
 {
-    return *this == Core::getInstance()->getSelfId();
+    return *this == Nexus::getProfile()->getSelfId();
 }
 
 void ToxID::clear()

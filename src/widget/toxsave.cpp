@@ -16,7 +16,6 @@
 
 #include "toxsave.h"
 #include "gui.h"
-#include "src/core.h"
 #include "src/misc/settings.h"
 #include <QCoreApplication>
 #include <QDir>
@@ -33,11 +32,11 @@ bool toxSaveEventHandler(const QByteArray& eventData)
 
 bool handleToxSave(const QString& path)
 {
-    Core* core = Core::getInstance();
+    Core* core = Nexus::getProfile();
 
     while (!core)
     {
-        core = Core::getInstance();
+        core = Nexus::getProfile();
         qApp->processEvents();
     }
 
