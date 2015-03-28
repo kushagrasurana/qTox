@@ -60,7 +60,7 @@ void Nexus::start()
     QString profilePath = Settings::getInstance().detectProfile();
     coreThread = new QThread(this);
     coreThread->setObjectName("qTox Core");
-    profile = new Profile(Camera::getInstance(), coreThread, profilePath);
+    profile = new Profile(profilePath);
     profile->moveToThread(coreThread);
     connect(coreThread, &QThread::started, profile, &Profile::start);
 

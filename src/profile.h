@@ -34,8 +34,14 @@ class Profile : public QObject
     Q_OBJECT
 
 public:
+    Profile::Profile(const QString& profile);
+
     ToxCore* tox;
     ToxAv* toxav; // this object lives in a different thread
+
+signals:
+    void badProxy();
+    void failedToStart();
 
 private:
     QHash<int, Friend> friendsList;
