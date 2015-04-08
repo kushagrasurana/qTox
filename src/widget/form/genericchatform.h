@@ -35,7 +35,7 @@ class ChatTextEdit;
 class ChatLog;
 class MaskablePixmapWidget;
 class Widget;
-struct ToxID;
+struct ToxAddr;
 
 namespace Ui {
     class MainWindow;
@@ -50,11 +50,11 @@ public:
     virtual void setName(const QString &newName);
     virtual void show(Ui::MainWindow &ui);
 
-    ChatMessage::Ptr addMessage(const ToxID& author, const QString &message, bool isAction, const QDateTime &datetime, bool isSent);
+    ChatMessage::Ptr addMessage(const ToxAddr& author, const QString &message, bool isAction, const QDateTime &datetime, bool isSent);
     ChatMessage::Ptr addSelfMessage(const QString &message, bool isAction, const QDateTime &datetime, bool isSent);
 
     void addSystemInfoMessage(const QString &message, ChatMessage::SystemMessageType type, const QDateTime &datetime);
-    void addAlertMessage(const ToxID& author, QString message, QDateTime datetime);
+    void addAlertMessage(const ToxAddr& author, QString message, QDateTime datetime);
     bool isEmpty();
 
     ChatLog* getChatLog() const;
@@ -80,10 +80,10 @@ protected slots:
     void nextContact();
 
 protected:
-    QString resolveToxID(const ToxID &id);
+    QString resolveToxAddr(const ToxAddr &id);
     void insertChatMessage(ChatMessage::Ptr msg);
 
-    ToxID previousId;
+    ToxAddr previousId;
     Widget *parent;
     QMenu menu;
     int curRow;

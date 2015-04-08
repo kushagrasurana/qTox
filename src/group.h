@@ -27,7 +27,7 @@
 struct Friend;
 class GroupWidget;
 class GroupChatForm;
-struct ToxID;
+struct ToxAddr;
 
 class Group : public QObject
 {

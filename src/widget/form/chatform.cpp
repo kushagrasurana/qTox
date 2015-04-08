@@ -133,7 +133,7 @@ void ChatForm::onSendTriggered()
         if (isAction)
             qt_msg_hist = "/me " + qt_msg;
 
-        int id = HistoryKeeper::getInstance()->addChatEntry(f->getToxID().publicKey, qt_msg_hist,
+        int id = HistoryKeeper::getInstance()->addChatEntry(f->getToxAddr().publicKey, qt_msg_hist,
                                                             Nexus::getProfile()->getSelfId().publicKey, timestamp, status);
 
         ChatMessage::Ptr ma = addSelfMessage(qt_msg, isAction, timestamp, false);
@@ -220,7 +220,7 @@ void ChatForm::onFileRecvRequest(ToxFile file)
     if (file.friendId != f->getFriendID())
         return;
 
-    Widget* w = Widget::getInstance();
+    Widget* w = Nexus::getDesktopGUI();
     if (!w->isFriendWidgetCurActiveWidget(f)|| w->isMinimized() || !w->isActiveWindow())
     {
         w->newMessageAlert(f->getFriendWidget());
@@ -229,7 +229,7 @@ void ChatForm::onFileRecvRequest(ToxFile file)
     }
 
     QString name;
-    ToxID friendId = f->getToxID();
+    ToxAddr friendId = f->getToxAddr();
     if (friendId != previousId)
     {
         name = f->getDisplayedName();
@@ -239,7 +239,7 @@ void ChatForm::onFileRecvRequest(ToxFile file)
     ChatMessage::Ptr msg = ChatMessage::createFileTransferMessage(name, file, false, QDateTime::currentDateTime());
     insertChatMessage(msg);
 
-    if (!Settings::getInstance().getAutoAcceptDir(f->getToxID()).isEmpty()
+    if (!Settings::getInstance().getAutoAcceptDir(f->getToxAddr()).isEmpty()
             || Settings::getInstance().getAutoSaveEnabled())
     {
         ChatLineContentProxy* proxy = dynamic_cast<ChatLineContentProxy*>(msg->getContent(1));
@@ -248,7 +248,7 @@ void ChatForm::onFileRecvRequest(ToxFile file)
             FileTransferWidget* tfWidget = dynamic_cast<FileTransferWidget*>(proxy->getWidget());
 
             if(tfWidget)
-                tfWidget->autoAcceptTransfer(Settings::getInstance().getAutoAcceptDir(f->getToxID()));
+                tfWidget->autoAcceptTransfer(Settings::getInstance().getAutoAcceptDir(f->getToxAddr()));
         }
     }
 }
@@ -296,7 +296,7 @@ void ChatForm::onAvInvite(int FriendId, int CallId, bool video)
     
     insertChatMessage(ChatMessage::createChatInfoMessage(tr("%1 calling").arg(f->getDisplayedName()), ChatMessage::INFO, QDateTime::currentDateTime()));
 
-    Widget* w = Widget::getInstance();
+    Widget* w = Nexus::getDesktopGUI();
     if (!w->isFriendWidgetCurActiveWidget(f)|| w->isMinimized() || !w->isActiveWindow())
     {
         w->newMessageAlert(f->getFriendWidget());
@@ -812,10 +812,10 @@ void ChatForm::loadHistory(QDateTime since, bool processUndelivered)
         }
     }
 
-    auto msgs = HistoryKeeper::getInstance()->getChatHistory(HistoryKeeper::ctSingle, f->getToxID().publicKey, since, now);
+    auto msgs = HistoryKeeper::getInstance()->getChatHistory(HistoryKeeper::ctSingle, f->getToxAddr().publicKey, since, now);
 
-    ToxID storedPrevId = previousId;
-    ToxID prevId;
+    ToxAddr storedPrevId = previousId;
+    ToxAddr prevId;
 
     QList<ChatLine::Ptr> historyMessages;
 
@@ -833,8 +833,8 @@ void ChatForm::loadHistory(QDateTime since, bool processUndelivered)
         }
 
         // Show each messages
-        ToxID authorId = ToxID::fromString(it.sender);
-        QString authorStr = authorId.isMine() ? Nexus::getProfile()->getUsername() : resolveToxID(authorId);
+        ToxAddr authorId = ToxAddr::fromString(it.sender);
+        QString authorStr = authorId.isMine() ? Nexus::getProfile()->getUsername() : resolveToxAddr(authorId);
         bool isAction = it.message.startsWith("/me ");
 
         ChatMessage::Ptr msg = ChatMessage::createChatMessage(authorStr,

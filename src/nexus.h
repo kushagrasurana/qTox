@@ -24,6 +24,7 @@ public:
     static Widget* getDesktopGUI(); ///< Will return 0 if not started
     static QString getSupportedImageFilter();
     static bool isFilePathWritable(const QString& filepath); // WARNING: Tests by brute force, i.e. removes the file in question
+    static QString sanitize(QString filename);
 
 private:
     explicit Nexus(QObject *parent = 0);
@@ -31,8 +32,6 @@ private:
 
 private:
     Profile* profile = nullptr; // in the future this may be multiple profiles
-    QThread* coreThread = nullptr;
-    QThread* avThread = nullptr;
     Widget* widget = nullptr;
     AndroidGUI* androidgui = nullptr;
     bool started = false;

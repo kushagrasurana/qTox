@@ -16,6 +16,9 @@
 
 #include "privacyform.h"
 #include "ui_privacysettings.h"
+#include "src/nexus.h"
+#include "src/profile.h"
+#include "src/localfileencryptor.h"
 #include "src/widget/form/settingswidget.h"
 #include "src/misc/settings.h"
 #include "src/historykeeper.h"
@@ -56,7 +59,7 @@ void PrivacyForm::onEnableLoggingUpdated()
     Settings::getInstance().setEnableLogging(bodyUI->cbKeepHistory->isChecked());
     bodyUI->cbEncryptHistory->setEnabled(bodyUI->cbKeepHistory->isChecked());
     HistoryKeeper::resetInstance();
-    Widget::getInstance()->clearAllReceipts();
+    Nexus::getDesktopGUI()->clearAllReceipts();
 }
 
 void PrivacyForm::onTypingNotificationEnabledUpdated()
@@ -66,19 +69,19 @@ void PrivacyForm::onTypingNotificationEnabledUpdated()
 
 bool PrivacyForm::setChatLogsPassword()
 {
-    Core* core = Nexus::getProfile();
+    LocalFileEncryptor* encmgr = Nexus::getProfile()->encmgr;
     SetPasswordDialog* dialog;
 
     // check if an encrypted history exists because it was disabled earlier, and use it if possible
     QString path = HistoryKeeper::getHistoryPath(QString(), 1);
-    QByteArray salt = core->getSaltFromFile(path);
+    QByteArray salt = encmgr->getSaltFromFile(path);
     bool haveEncHist = salt.size() > 0;
 
     QString body = tr("Please set your new chat history password.");
     if (haveEncHist)
         body += "\n\n" + tr("It appears you have an unused encrypted chat history; if the password matches, it will be added to your current history.");
 
-    if (core->isPasswordSet(Core::ptMain))
+    if (encmgr->isPasswordSet(LocalFileEncryptor::ptMain))
         dialog = new SetPasswordDialog(body, tr("Use data file password", "pushbutton text"), 0);
     else
         dialog = new SetPasswordDialog(body, QString(), 0);
@@ -93,11 +96,11 @@ bool PrivacyForm::setChatLogsPassword()
         QString newpw = dialog->getPassword();
 
         if (r == SetPasswordDialog::Tertiary)
-            core->useOtherPassword(Core::ptHistory);
+            encmgr->useOtherPassword(LocalFileEncryptor::ptHistory);
         else if (haveEncHist)
-            core->setPassword(newpw, Core::ptHistory, reinterpret_cast<uint8_t*>(salt.data()));
+            encmgr->setPassword(newpw, LocalFileEncryptor::ptHistory, salt);
         else
-            core->setPassword(newpw, Core::ptHistory);
+            encmgr->setPassword(newpw, LocalFileEncryptor::ptHistory);
 
         if (!haveEncHist || HistoryKeeper::checkPassword(1))
         {
@@ -105,7 +108,7 @@ bool PrivacyForm::setChatLogsPassword()
             HistoryKeeper::getInstance()->importMessages(oldMessages);
             if (haveEncHist)
             {
-                Widget::getInstance()->reloadHistory();
+                Nexus::getDesktopGUI()->reloadHistory();
                 GUI::showWarning(tr("Successfully decrypted old chat history","popup title"), tr("You have succesfully decrypted the old chat history, and it has been added to your current history and re-encrypted.", "popup text"));
             }
             delete dialog;
@@ -125,11 +128,11 @@ bool PrivacyForm::setChatLogsPassword()
 
 void PrivacyForm::onEncryptLogsUpdated()
 {
-    Core* core = Nexus::getProfile();
+    LocalFileEncryptor* encmgr = Nexus::getProfile()->encmgr;
 
     if (bodyUI->cbEncryptHistory->isChecked())
     {
-        if (!core->isPasswordSet(Core::ptHistory))
+        if (!encmgr->isPasswordSet(LocalFileEncryptor::ptHistory))
         {
             if (setChatLogsPassword())
             {
@@ -144,7 +147,7 @@ void PrivacyForm::onEncryptLogsUpdated()
         QMessageBox box(QMessageBox::Warning,
             tr("Old encrypted chat history", "title"),
             tr("Would you like to decrypt your chat history?\nOtherwise it will be deleted."),
-            QMessageBox::NoButton, Widget::getInstance());
+            QMessageBox::NoButton, Nexus::getDesktopGUI());
         QPushButton* decryptBtn = box.addButton(tr("Decrypt"), QMessageBox::YesRole);
         QPushButton* deleteBtn = box.addButton(tr("Delete"), QMessageBox::NoRole);
         QPushButton* cancelBtn = box.addButton(tr("Cancel"), QMessageBox::RejectRole);
@@ -156,7 +159,7 @@ void PrivacyForm::onEncryptLogsUpdated()
         if (box.clickedButton() == decryptBtn)
         {
             QList<HistoryKeeper::HistMessage> oldMessages = HistoryKeeper::exportMessagesDeleteFile(true);
-            core->clearPassword(Core::ptHistory);
+            encmgr->clearPassword(LocalFileEncryptor::ptHistory);
             Settings::getInstance().setEncryptLogs(false);
             HistoryKeeper::getInstance()->importMessages(oldMessages);
         }
@@ -165,7 +168,7 @@ void PrivacyForm::onEncryptLogsUpdated()
             QMessageBox box2(QMessageBox::Critical,
                 tr("Old encrypted chat history", "title"),
                 tr("Are you sure you want to lose your entire chat history?"),
-                QMessageBox::NoButton, Widget::getInstance());
+                QMessageBox::NoButton, Nexus::getDesktopGUI());
             QPushButton* deleteBtn2 = box2.addButton(tr("Delete"), QMessageBox::AcceptRole);
             QPushButton* cancelBtn2 = box2.addButton(tr("Cancel"), QMessageBox::RejectRole);
             box2.setDefaultButton(cancelBtn2);
@@ -189,7 +192,7 @@ void PrivacyForm::onEncryptLogsUpdated()
         }
     }
 
-    core->clearPassword(Core::ptHistory);
+    encmgr->clearPassword(LocalFileEncryptor::ptHistory);
     Settings::getInstance().setEncryptLogs(false);
     bodyUI->cbEncryptHistory->setChecked(false);
     bodyUI->changeLogsPwButton->setEnabled(false);
@@ -198,10 +201,11 @@ void PrivacyForm::onEncryptLogsUpdated()
 
 bool PrivacyForm::setToxPassword()
 {
-    Core* core = Nexus::getProfile();
+    Profile* prof = Nexus::getProfile();
+    LocalFileEncryptor* encmgr = prof->encmgr;
     SetPasswordDialog* dialog;
     QString body = tr("Please set your new data file password.");
-    if (core->isPasswordSet(Core::ptHistory))
+    if (encmgr->isPasswordSet(LocalFileEncryptor::ptHistory))
         dialog = new SetPasswordDialog(body, tr("Use chat history password", "pushbutton text"), 0);
     else
         dialog = new SetPasswordDialog(body, QString(), 0);
@@ -212,12 +216,12 @@ bool PrivacyForm::setToxPassword()
         delete dialog;
 
         if (r == SetPasswordDialog::Tertiary)
-            core->useOtherPassword(Core::ptMain);
+            encmgr->useOtherPassword(LocalFileEncryptor::ptMain);
         else
-            core->setPassword(newpw, Core::ptMain);
+            encmgr->setPassword(newpw, LocalFileEncryptor::ptMain);
 
         Settings::getInstance().setEncryptTox(true);
-        core->saveConfiguration();
+        prof->saveConfiguration();
         return true;
     }
     else
@@ -229,11 +233,11 @@ bool PrivacyForm::setToxPassword()
 
 void PrivacyForm::onEncryptToxUpdated()
 {
-    Core* core = Nexus::getProfile();
+    LocalFileEncryptor* encmgr = Nexus::getProfile()->encmgr;
 
     if (bodyUI->cbEncryptTox->isChecked())
     {
-        if (!core->isPasswordSet(Core::ptMain))
+        if (!encmgr->isPasswordSet(LocalFileEncryptor::ptMain))
         {
             if (setToxPassword())
             {
@@ -258,7 +262,7 @@ void PrivacyForm::onEncryptToxUpdated()
     bodyUI->cbEncryptTox->setChecked(false);
     Settings::getInstance().setEncryptTox(false);
     bodyUI->changeToxPwButton->setEnabled(false);
-    core->clearPassword(Core::ptMain);
+    encmgr->clearPassword(LocalFileEncryptor::ptMain);
 }
 
 void PrivacyForm::setNospam()
@@ -268,12 +272,12 @@ void PrivacyForm::setNospam()
     bool ok;
     uint32_t nospam = newNospam.toLongLong(&ok, 16);
     if (ok)
-        Nexus::getProfile()->setNospam(nospam);
+        Nexus::getProfile()->tox->setSelfNoSpam(nospam); // TODO thread safety
 }
 
 void PrivacyForm::present()
 {
-    bodyUI->nospamLineEdit->setText(Nexus::getProfile()->getSelfId().noSpam);
+    bodyUI->nospamLineEdit->setText(QString::number(Nexus::getProfile()->tox->getSelfNoSpam(), 16).toUpper()); // TODO thread safety
     bodyUI->cbTypingNotification->setChecked(Settings::getInstance().isTypingNotificationEnabled());
     bodyUI->cbKeepHistory->setChecked(Settings::getInstance().getEnableLogging());
     bodyUI->cbEncryptHistory->setChecked(Settings::getInstance().getEncryptLogs());
@@ -292,8 +296,8 @@ void PrivacyForm::generateRandomNospam()
     for (int i = 0; i < 4; i++)
         newNospam = (newNospam<<8) + (qrand() % 256); // Generate byte by byte. For some reason.
 
-    Nexus::getProfile()->setNospam(newNospam);
-    bodyUI->nospamLineEdit->setText(Nexus::getProfile()->getSelfId().noSpam);
+    Nexus::getProfile()->tox->setSelfNoSpam(newNospam); // TODO thread safety
+    bodyUI->nospamLineEdit->setText(QString::number(Nexus::getProfile()->tox->getSelfNoSpam(), 16).toUpper()); // TODO thread safety
 }
 
 void PrivacyForm::onNospamEdit()

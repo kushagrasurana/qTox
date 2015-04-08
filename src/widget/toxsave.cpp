@@ -58,7 +58,7 @@ bool handleToxSave(const QString& path)
         return false;
     }
 
-    QString profilePath = QDir(Settings::getSettingsDirPath()).filePath(profile + Core::TOX_EXT);
+    QString profilePath = QDir(Settings::getSettingsDirPath()).filePath(profile + ".tox");
 
     if (QFileInfo(profilePath).exists() && !GUI::askQuestion(QObject::tr("Profile already exists", "import confirm title"),
             QObject::tr("A profile named \"%1\" already exists. Do you want to erase it?", "import confirm text").arg(profile)))

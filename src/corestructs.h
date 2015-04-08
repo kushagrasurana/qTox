@@ -8,29 +8,34 @@
 class QFile;
 class QTimer;
 
-enum class Status : int {Online = 0, Away, Busy, Offline};
+enum class Status : int {Online = 0, Away, Busy, Offline}; // TODO: replace with tox.h enums
 
-#define TOX_ID_PUBLIC_KEY_LENGTH 64
-#define TOX_ID_NO_SPAM_LENGTH    8
-#define TOX_ID_CHECKSUM_LENGTH   4
+// TODO: replace magic numbers with compile-time checkable constants (without including tox.h)
+// assertion in corestructs.cpp?
+#define TOX_ADDR_PUBLIC_KEY_LENGTH 64
+#define TOX_ADDR_NO_SPAM_LENGTH    8
+#define TOX_ADDR_CHECKSUM_LENGTH   4
 
-struct ToxID
+struct ToxAddr // TODO: core no longer uses the term "id". There is your public key and address (which is pk+nospam+checksum)
 {
-    ToxID()=default;
-    ToxID(const ToxID& other);
+    ToxAddr()=default;
+    explicit ToxAddr(const ToxAddr& other);
+    explicit ToxAddr(const QString& addr);
+    explicit ToxAddr(const QByteArray& addr);
 
-    QString publicKey;
-    QString noSpam;
-    QString checkSum;
+    QByteArray publicKey;
+    QByteArray noSpam;
+    QByteArray checkSum;
 
     QString toString() const;
-    static ToxID fromString(QString id);
-    static bool isToxId(const QString& id);
+    static bool isToxAddr(const QString& addr);
 
-    bool operator==(const ToxID& other) const;
-    bool operator!=(const ToxID& other) const;
-    bool isMine() const;
+    bool operator==(const ToxAddr& other) const;
+    bool operator!=(const ToxAddr& other) const;
     void clear();
+
+    static QString toHexString(const QByteArray& data);
+    static QByteArray fromHexString(const QString& hex);
 };
 
 struct DhtServer

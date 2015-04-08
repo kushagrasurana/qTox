@@ -68,7 +68,7 @@ void Group::removePeer(int peerId)
 
 void Group::updatePeer(int peerId, QString name)
 {
-    ToxID id = Nexus::getProfile()->getGroupPeerToxID(groupId, peerId);
+    ToxAddr id = Nexus::getProfile()->getGroupPeerToxAddr(groupId, peerId);
     QString toxid = id.publicKey;
     peers[peerId] = name;
     toxids[toxid] = name;
@@ -99,7 +99,7 @@ void Group::regeneratePeerList()
     nPeers = peers.size();
     for (int i = 0; i < nPeers; i++)
     {
-        ToxID id = Nexus::getProfile()->getGroupPeerToxID(groupId, i);
+        ToxAddr id = Nexus::getProfile()->getGroupPeerToxAddr(groupId, i);
         if (id.isMine())
             selfPeerNum = i;
         QString toxid = id.publicKey;
@@ -171,7 +171,7 @@ int Group::getMentionedFlag() const
     return userWasMentioned;
 }
 
-QString Group::resolveToxID(const ToxID &id) const
+QString Group::resolveToxAddr(const ToxAddr &id) const
 {
     QString key = id.publicKey;
     auto it = toxids.find(key);

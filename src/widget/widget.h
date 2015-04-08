@@ -60,7 +60,6 @@ public:
     void setCentralWidget(QWidget *widget, const QString &widgetName);
     QString getUsername();
     Camera* getCamera();
-    static Widget* getInstance();
     void newMessageAlert(GenericChatroomWidget* chat);
     bool isFriendWidgetCurActiveWidget(Friend* f);
     bool getIsWindowMinimized();
@@ -172,7 +171,6 @@ private:
     ProfileForm *profileForm;
     SettingsWidget *settingsWidget;
     FilesForm *filesForm;
-    static Widget *instance;
     GenericChatroomWidget *activeChatroomWidget;
     FriendListWidget *contactListWidget;
     MaskablePixmapWidget *profilePicture;

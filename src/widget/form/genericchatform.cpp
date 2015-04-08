@@ -218,10 +218,10 @@ void GenericChatForm::onChatContextMenuRequested(QPoint pos)
     menu.exec(pos);
 }
 
-ChatMessage::Ptr GenericChatForm::addMessage(const ToxID& author, const QString &message, bool isAction,
+ChatMessage::Ptr GenericChatForm::addMessage(const ToxAddr& author, const QString &message, bool isAction,
                                              const QDateTime &datetime, bool isSent)
 {
-    QString authorStr = author.isMine() ? Nexus::getProfile()->getUsername() : resolveToxID(author);
+    QString authorStr = author.isMine() ? Nexus::getProfile()->getUsername() : resolveToxAddr(author);
 
     ChatMessage::Ptr msg;
     if(isAction)
@@ -251,9 +251,9 @@ ChatMessage::Ptr GenericChatForm::addSelfMessage(const QString &message, bool is
     return addMessage(Nexus::getProfile()->getSelfId(), message, isAction, datetime, isSent);
 }
 
-void GenericChatForm::addAlertMessage(const ToxID &author, QString message, QDateTime datetime)
+void GenericChatForm::addAlertMessage(const ToxAddr &author, QString message, QDateTime datetime)
 {
-    QString authorStr = resolveToxID(author);
+    QString authorStr = resolveToxAddr(author);
     ChatMessage::Ptr msg = ChatMessage::createChatMessage(authorStr, message, ChatMessage::ALERT, author.isMine(), datetime);
     insertChatMessage(msg);
 
@@ -343,7 +343,7 @@ void GenericChatForm::clearChatArea()
 void GenericChatForm::clearChatArea(bool notinform)
 {
     chatWidget->clear();
-    previousId = ToxID();
+    previousId = ToxAddr();
 
     if (!notinform)
         addSystemInfoMessage(tr("Cleared"), ChatMessage::INFO, QDateTime::currentDateTime());
@@ -359,7 +359,7 @@ void GenericChatForm::onSelectAllClicked()
     chatWidget->selectAll();
 }
 
-QString GenericChatForm::resolveToxID(const ToxID &id)
+QString GenericChatForm::resolveToxAddr(const ToxAddr &id)
 {
     Friend *f = FriendList::findFriend(id);
     if (f)
@@ -368,7 +368,7 @@ QString GenericChatForm::resolveToxID(const ToxID &id)
     } else {
         for (auto it : GroupList::getAllGroups())
         {
-            QString res = it->resolveToxID(id);
+            QString res = it->resolveToxAddr(id);
             if (res.size())
                 return res;
         }

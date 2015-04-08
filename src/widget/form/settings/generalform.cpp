@@ -16,6 +16,8 @@
 
 #include "ui_generalsettings.h"
 #include "generalform.h"
+#include "src/nexus.h"
+#include "src/profile.h"
 #include "src/widget/form/settingswidget.h"
 #include "src/widget/widget.h"
 #include "src/misc/settings.h"
@@ -209,7 +211,7 @@ void GeneralForm::onEnableIPv6Updated()
 void GeneralForm::onTranslationUpdated()
 {
     Settings::getInstance().setTranslation(locales[bodyUI->transComboBox->currentIndex()]);
-    Widget::getInstance()->setTranslation();
+    Nexus::getDesktopGUI()->setTranslation();
 }
 
 void GeneralForm::onAutorunUpdated()
@@ -237,7 +239,7 @@ void GeneralForm::onSetCloseToTray()
 void GeneralForm::onSetLightTrayIcon()
 {
     Settings::getInstance().setLightTrayIcon(bodyUI->lightTrayIcon->isChecked());
-    Widget::getInstance()->updateIcons();
+    Nexus::getDesktopGUI()->updateIcons();
 }
 
 void GeneralForm::onSetMinimizeToTray()
@@ -348,11 +350,11 @@ void GeneralForm::onUseProxyUpdated()
 
 void GeneralForm::onReconnectClicked()
 {
-    if (Nexus::getProfile()->anyActiveCalls())
+    /*if (Nexus::getProfile()->anyActiveCalls()) TODO COMPILE CHECK
         QMessageBox::warning(this, tr("Call active", "popup title"),
            tr("You can't disconnect while a call is active!", "popup text"));
-    else
-        emit Widget::getInstance()->changeProfile(Settings::getInstance().getCurrentProfile());
+    else*/
+        emit Nexus::getDesktopGUI()->changeProfile(Settings::getInstance().getCurrentProfile());
 }
 
 void GeneralForm::reloadSmiles()

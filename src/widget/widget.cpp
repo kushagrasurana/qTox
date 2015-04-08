@@ -18,10 +18,8 @@
 #include "ui_mainwindow.h"
 #include "src/misc/settings.h"
 #include "src/friend.h"
-#include "src/friendlist.h"
 #include "tool/friendrequestdialog.h"
 #include "friendwidget.h"
-#include "src/grouplist.h"
 #include "src/group.h"
 #include "groupwidget.h"
 #include "form/groupchatform.h"
@@ -61,20 +59,12 @@
 #include <QLibraryInfo>
 #include <tox/tox.h>
 
-#ifdef Q_OS_ANDROID
-#define IS_ON_DESKTOP_GUI 0
-#else
-#define IS_ON_DESKTOP_GUI 1
-#endif
-
 bool toxActivateEventHandler(const QByteArray&)
 {
-    if (!Widget::getInstance()->isActiveWindow())
-        Widget::getInstance()->forceShow();
+    if (!Nexus::getDesktopGUI()->isActiveWindow())
+        Nexus::getDesktopGUI()->forceShow();
     return true;
 }
-
-Widget *Widget::instance{nullptr};
 
 Widget::Widget(QWidget *parent)
     : QMainWindow(parent),
@@ -176,11 +166,11 @@ void Widget::init()
     profileForm = new ProfileForm();
     settingsWidget = new SettingsWidget();
 
-    Core* core = Nexus::getCore();
-    connect(core, SIGNAL(fileDownloadFinished(const QString&)), filesForm, SLOT(onFileDownloadComplete(const QString&)));
-    connect(core, SIGNAL(fileUploadFinished(const QString&)), filesForm, SLOT(onFileUploadComplete(const QString&)));
+    Profile* prof = Nexus::getProfile();
+/*    connect(prof, SIGNAL(fileDownloadFinished(const QString&)), filesForm, SLOT(onFileDownloadComplete(const QString&)));
+    connect(prof, SIGNAL(fileUploadFinished(const QString&)), filesForm, SLOT(onFileUploadComplete(const QString&))); TODO COMPILE CHECK */
     connect(settingsWidget, &SettingsWidget::setShowSystemTray, this, &Widget::onSetShowSystemTray);
-    connect(core, SIGNAL(selfAvatarChanged(QPixmap)), profileForm, SLOT(onSelfAvatarLoaded(QPixmap)));
+    connect(prof, SIGNAL(selfAvatarChanged(QPixmap)), profileForm, SLOT(onSelfAvatarLoaded(QPixmap)));
     connect(ui->addButton, SIGNAL(clicked()), this, SLOT(onAddClicked()));
     connect(ui->groupButton, SIGNAL(clicked()), this, SLOT(onGroupClicked()));
     connect(ui->transferButton, SIGNAL(clicked()), this, SLOT(onTransferClicked()));
@@ -298,21 +288,9 @@ Widget::~Widget()
     delete timer;
     delete offlineMsgTimer;
 
-    FriendList::clear();
-    GroupList::clear();
     delete trayMenu;
     delete ui;
     delete translator;
-    instance = nullptr;
-}
-
-Widget* Widget::getInstance()
-{
-    assert(IS_ON_DESKTOP_GUI); // Widget must only be used on Desktop platforms
-
-    if (!instance)
-        instance = new Widget();
-    return instance;
 }
 
 void Widget::closeEvent(QCloseEvent *event)
@@ -352,7 +330,7 @@ void Widget::resizeEvent(QResizeEvent *event)
 
 QString Widget::getUsername()
 {
-    return Nexus::getCore()->getUsername();
+    return Nexus::getProfile()->getUsername();
 }
 
 void Widget::onSelfAvatarLoaded(const QPixmap& pic)
@@ -379,7 +357,7 @@ void Widget::onDisconnected()
 void Widget::onFailedToStartCore()
 {
     QMessageBox critical(this);
-    critical.setText(tr("Toxcore failed to start, the application will terminate after you close this message."));
+    critical.setText(tr("Toxprof failed to start, the application will terminate after you close this message."));
     critical.setIcon(QMessageBox::Critical);
     critical.exec();
     qApp->quit();
@@ -388,7 +366,7 @@ void Widget::onFailedToStartCore()
 void Widget::onBadProxyCore()
 {
     QMessageBox critical(this);
-    critical.setText(tr("toxcore failed to start with your proxy settings. qTox cannot run; please modify your "
+    critical.setText(tr("toxprof failed to start with your proxy settings. qTox cannot run; please modify your "
                "settings and restart.", "popup text"));
     critical.setIcon(QMessageBox::Critical);
     critical.exec();
@@ -426,7 +404,7 @@ void Widget::onAddClicked()
 
 void Widget::onGroupClicked()
 {
-    Nexus::getCore()->createGroup();
+    Nexus::getProfile()->createGroup();
 }
 
 void Widget::onTransferClicked()
@@ -542,7 +520,7 @@ void Widget::hideMainForms()
 void Widget::onUsernameChanged(const QString& newUsername, const QString& oldUsername)
 {
     setUsername(oldUsername);               // restore old username until Core tells us to set it
-    Nexus::getCore()->setUsername(newUsername);
+    Nexus::getProfile()->setUsername(newUsername);
 }
 
 void Widget::setUsername(const QString& username)
@@ -559,7 +537,7 @@ void Widget::onStatusMessageChanged(const QString& newStatusMessage, const QStri
 {
     ui->statusLabel->setText(oldStatusMessage); // restore old status message until Core tells us to set it
     ui->statusLabel->setToolTip(oldStatusMessage); // for overlength messsages
-    Nexus::getCore()->setStatusMessage(newStatusMessage);
+    Nexus::getProfile()->setStatusMessage(newStatusMessage);
 }
 
 void Widget::setStatusMessage(const QString &statusMessage)
@@ -577,46 +555,46 @@ void Widget::reloadHistory()
 void Widget::addFriend(int friendId, const QString &userId)
 {
     //qDebug() << "Widget: Adding friend with id" << userId;
-    ToxID userToxId = ToxID::fromString(userId);
+    ToxAddr userToxId = ToxAddr::fromString(userId);
     Friend* newfriend = FriendList::addFriend(friendId, userToxId);
     contactListWidget->moveWidget(newfriend->getFriendWidget(),Status::Offline,0);
 
-    Core* core = Nexus::getCore();
+    Core* prof = Nexus::getProfile();
     connect(newfriend, &Friend::displayedNameChanged, contactListWidget, &FriendListWidget::moveWidget);
     connect(settingsWidget, &SettingsWidget::compactToggled, newfriend->getFriendWidget(), &GenericChatroomWidget::onCompactChanged);
     connect(newfriend->getFriendWidget(), SIGNAL(chatroomWidgetClicked(GenericChatroomWidget*)), this, SLOT(onChatroomWidgetClicked(GenericChatroomWidget*)));
     connect(newfriend->getFriendWidget(), SIGNAL(removeFriend(int)), this, SLOT(removeFriend(int)));
     connect(newfriend->getFriendWidget(), SIGNAL(copyFriendIdToClipboard(int)), this, SLOT(copyFriendIdToClipboard(int)));
     connect(newfriend->getFriendWidget(), SIGNAL(chatroomWidgetClicked(GenericChatroomWidget*)), newfriend->getChatForm(), SLOT(focusInput()));
-    connect(newfriend->getChatForm(), SIGNAL(sendMessage(int,QString)), core, SLOT(sendMessage(int,QString)));
-    connect(newfriend->getChatForm(), &GenericChatForm::sendAction, core, &Core::sendAction);
-    connect(newfriend->getChatForm(), SIGNAL(sendFile(int32_t, QString, QString, long long)), core, SLOT(sendFile(int32_t, QString, QString, long long)));
-    connect(newfriend->getChatForm(), SIGNAL(answerCall(int)), core, SLOT(answerCall(int)));
-    connect(newfriend->getChatForm(), SIGNAL(hangupCall(int)), core, SLOT(hangupCall(int)));
-    connect(newfriend->getChatForm(), SIGNAL(rejectCall(int)), core, SLOT(rejectCall(int)));
-    connect(newfriend->getChatForm(), SIGNAL(startCall(int)), core, SLOT(startCall(int)));
-    connect(newfriend->getChatForm(), SIGNAL(startVideoCall(int,bool)), core, SLOT(startCall(int,bool)));
-    connect(newfriend->getChatForm(), SIGNAL(cancelCall(int,int)), core, SLOT(cancelCall(int,int)));
-    connect(newfriend->getChatForm(), SIGNAL(micMuteToggle(int)), core, SLOT(micMuteToggle(int)));
-    connect(newfriend->getChatForm(), SIGNAL(volMuteToggle(int)), core, SLOT(volMuteToggle(int)));
+    connect(newfriend->getChatForm(), SIGNAL(sendMessage(int,QString)), prof, SLOT(sendMessage(int,QString)));
+    connect(newfriend->getChatForm(), &GenericChatForm::sendAction, prof, &Core::sendAction);
+    connect(newfriend->getChatForm(), SIGNAL(sendFile(int32_t, QString, QString, long long)), prof, SLOT(sendFile(int32_t, QString, QString, long long)));
+    connect(newfriend->getChatForm(), SIGNAL(answerCall(int)), prof, SLOT(answerCall(int)));
+    connect(newfriend->getChatForm(), SIGNAL(hangupCall(int)), prof, SLOT(hangupCall(int)));
+    connect(newfriend->getChatForm(), SIGNAL(rejectCall(int)), prof, SLOT(rejectCall(int)));
+    connect(newfriend->getChatForm(), SIGNAL(startCall(int)), prof, SLOT(startCall(int)));
+    connect(newfriend->getChatForm(), SIGNAL(startVideoCall(int,bool)), prof, SLOT(startCall(int,bool)));
+    connect(newfriend->getChatForm(), SIGNAL(cancelCall(int,int)), prof, SLOT(cancelCall(int,int)));
+    connect(newfriend->getChatForm(), SIGNAL(micMuteToggle(int)), prof, SLOT(micMuteToggle(int)));
+    connect(newfriend->getChatForm(), SIGNAL(volMuteToggle(int)), prof, SLOT(volMuteToggle(int)));
     connect(newfriend->getChatForm(), &ChatForm::aliasChanged, newfriend->getFriendWidget(), &FriendWidget::setAlias);
-    connect(core, &Core::fileReceiveRequested, newfriend->getChatForm(), &ChatForm::onFileRecvRequest);
-    connect(core, &Core::avInvite, newfriend->getChatForm(), &ChatForm::onAvInvite);
-    connect(core, &Core::avStart, newfriend->getChatForm(), &ChatForm::onAvStart);
-    connect(core, &Core::avCancel, newfriend->getChatForm(), &ChatForm::onAvCancel);
-    connect(core, &Core::avEnd, newfriend->getChatForm(), &ChatForm::onAvEnd);
-    connect(core, &Core::avRinging, newfriend->getChatForm(), &ChatForm::onAvRinging);
-    connect(core, &Core::avStarting, newfriend->getChatForm(), &ChatForm::onAvStarting);
-    connect(core, &Core::avEnding, newfriend->getChatForm(), &ChatForm::onAvEnding);
-    connect(core, &Core::avRequestTimeout, newfriend->getChatForm(), &ChatForm::onAvRequestTimeout);
-    connect(core, &Core::avPeerTimeout, newfriend->getChatForm(), &ChatForm::onAvPeerTimeout);
-    connect(core, &Core::avMediaChange, newfriend->getChatForm(), &ChatForm::onAvMediaChange);
-    connect(core, &Core::avCallFailed, newfriend->getChatForm(), &ChatForm::onAvCallFailed);
-    connect(core, &Core::avRejected, newfriend->getChatForm(), &ChatForm::onAvRejected);
-    connect(core, &Core::friendAvatarChanged, newfriend->getChatForm(), &ChatForm::onAvatarChange);
-    connect(core, &Core::friendAvatarChanged, newfriend->getFriendWidget(), &FriendWidget::onAvatarChange);
-    connect(core, &Core::friendAvatarRemoved, newfriend->getChatForm(), &ChatForm::onAvatarRemoved);
-    connect(core, &Core::friendAvatarRemoved, newfriend->getFriendWidget(), &FriendWidget::onAvatarRemoved);
+    connect(prof, &Core::fileReceiveRequested, newfriend->getChatForm(), &ChatForm::onFileRecvRequest);
+    connect(prof, &Core::avInvite, newfriend->getChatForm(), &ChatForm::onAvInvite);
+    connect(prof, &Core::avStart, newfriend->getChatForm(), &ChatForm::onAvStart);
+    connect(prof, &Core::avCancel, newfriend->getChatForm(), &ChatForm::onAvCancel);
+    connect(prof, &Core::avEnd, newfriend->getChatForm(), &ChatForm::onAvEnd);
+    connect(prof, &Core::avRinging, newfriend->getChatForm(), &ChatForm::onAvRinging);
+    connect(prof, &Core::avStarting, newfriend->getChatForm(), &ChatForm::onAvStarting);
+    connect(prof, &Core::avEnding, newfriend->getChatForm(), &ChatForm::onAvEnding);
+    connect(prof, &Core::avRequestTimeout, newfriend->getChatForm(), &ChatForm::onAvRequestTimeout);
+    connect(prof, &Core::avPeerTimeout, newfriend->getChatForm(), &ChatForm::onAvPeerTimeout);
+    connect(prof, &Core::avMediaChange, newfriend->getChatForm(), &ChatForm::onAvMediaChange);
+    connect(prof, &Core::avCallFailed, newfriend->getChatForm(), &ChatForm::onAvCallFailed);
+    connect(prof, &Core::avRejected, newfriend->getChatForm(), &ChatForm::onAvRejected);
+    connect(prof, &Core::friendAvatarChanged, newfriend->getChatForm(), &ChatForm::onAvatarChange);
+    connect(prof, &Core::friendAvatarChanged, newfriend->getFriendWidget(), &FriendWidget::onAvatarChange);
+    connect(prof, &Core::friendAvatarRemoved, newfriend->getChatForm(), &ChatForm::onAvatarRemoved);
+    connect(prof, &Core::friendAvatarRemoved, newfriend->getFriendWidget(), &FriendWidget::onAvatarRemoved);
 
     // Try to get the avatar from the cache
     QPixmap avatar = Settings::getInstance().getSavedAvatar(userId);
@@ -733,10 +711,10 @@ void Widget::onFriendMessageReceived(int friendId, const QString& message, bool 
         return;
 
     QDateTime timestamp = QDateTime::currentDateTime();
-    f->getChatForm()->addMessage(f->getToxID(), message, isAction, timestamp, true);
+    f->getChatForm()->addMessage(f->getToxAddr(), message, isAction, timestamp, true);
 
-    HistoryKeeper::getInstance()->addChatEntry(f->getToxID().publicKey, isAction ? "/me " + message : message,
-                                               f->getToxID().publicKey, timestamp, true);
+    HistoryKeeper::getInstance()->addChatEntry(f->getToxAddr().publicKey, isAction ? "/me " + message : message,
+                                               f->getToxAddr().publicKey, timestamp, true);
 
     f->setEventFlag(f->getFriendWidget() != activeChatroomWidget);
     newMessageAlert(f->getFriendWidget());
@@ -823,7 +801,7 @@ void Widget::removeFriend(Friend* f, bool fake)
         onAddClicked();
     }
     FriendList::removeFriend(f->getFriendID(), fake);
-    Nexus::getCore()->removeFriend(f->getFriendID(), fake);
+    Nexus::getProfile()->removeFriend(f->getFriendID(), fake);
     delete f;
     if (ui->mainHead->layout()->isEmpty())
         onAddClicked();
@@ -854,7 +832,7 @@ void Widget::copyFriendIdToClipboard(int friendId)
     if (f != nullptr)
     {
         QClipboard *clipboard = QApplication::clipboard();
-        clipboard->setText(Nexus::getCore()->getFriendAddress(f->getFriendID()), QClipboard::Clipboard);
+        clipboard->setText(Nexus::getProfile()->getFriendAddress(f->getFriendID()), QClipboard::Clipboard);
     }
 }
 
@@ -862,9 +840,9 @@ void Widget::onGroupInviteReceived(int32_t friendId, uint8_t type, QByteArray in
 {
     if (type == TOX_GROUPCHAT_TYPE_TEXT || type == TOX_GROUPCHAT_TYPE_AV)
     {
-        if (GUI::askQuestion(tr("Group invite", "popup title"), tr("%1 has invited you to a groupchat. Would you like to join?", "popup text").arg(Nexus::getCore()->getFriendUsername(friendId)), true, false))
+        if (GUI::askQuestion(tr("Group invite", "popup title"), tr("%1 has invited you to a groupchat. Would you like to join?", "popup text").arg(Nexus::getProfile()->getFriendUsername(friendId)), true, false))
         {
-            int groupId = Nexus::getCore()->joinGroupchat(friendId, type, (uint8_t*)invite.data(), invite.length());
+            int groupId = Nexus::getProfile()->joinGroupchat(friendId, type, (uint8_t*)invite.data(), invite.length());
             if (groupId < 0)
             {
                 qWarning() << "Widget::onGroupInviteReceived: Unable to accept  group invite";
@@ -885,7 +863,7 @@ void Widget::onGroupMessageReceived(int groupnumber, int peernumber, const QStri
     if (!g)
         return;
 
-    ToxID author = Nexus::getProfile()->getGroupPeerToxID(groupnumber, peernumber);
+    ToxAddr author = Nexus::getProfile()->getGroupPeerToxAddr(groupnumber, peernumber);
     bool targeted = !author.isMine() && (message.contains(nameMention) || message.contains(sanitizedNameMention));
     if (targeted && !isAction)
         g->getChatForm()->addAlertMessage(author, message, QDateTime::currentDateTime());
@@ -912,7 +890,7 @@ void Widget::onGroupNamelistChanged(int groupnumber, int peernumber, uint8_t Cha
         g = createGroup(groupnumber);
     }
 
-    QString name = Nexus::getCore()->getGroupPeerName(groupnumber, peernumber);
+    QString name = Nexus::getProfile()->getGroupPeerName(groupnumber, peernumber);
     TOX_CHAT_CHANGE change = static_cast<TOX_CHAT_CHANGE>(Change);
     if (change == TOX_CHAT_CHANGE_PEER_ADD)
     {
@@ -923,7 +901,7 @@ void Widget::onGroupNamelistChanged(int groupnumber, int peernumber, uint8_t Cha
         g->regeneratePeerList();
         // g->getChatForm()->addSystemInfoMessage(tr("%1 has joined the chat").arg(name), "white", QDateTime::currentDateTime());
         // we can't display these messages until irungentoo fixes peernumbers
-        // https://github.com/irungentoo/toxcore/issues/1128
+        // https://github.com/irungentoo/toxprof/issues/1128
     }
     else if (change == TOX_CHAT_CHANGE_PEER_DEL)
     {
@@ -931,8 +909,8 @@ void Widget::onGroupNamelistChanged(int groupnumber, int peernumber, uint8_t Cha
         g->regeneratePeerList();
         // g->getChatForm()->addSystemInfoMessage(tr("%1 has left the chat").arg(name), "white", QDateTime::currentDateTime());
     }
-    else if (change == TOX_CHAT_CHANGE_PEER_NAME) // core overwrites old name before telling us it changed...
-        g->updatePeer(peernumber,Nexus::getCore()->getGroupPeerName(groupnumber, peernumber));
+    else if (change == TOX_CHAT_CHANGE_PEER_NAME) // prof overwrites old name before telling us it changed...
+        g->updatePeer(peernumber,Nexus::getProfile()->getGroupPeerName(groupnumber, peernumber));
 }
 
 void Widget::onGroupTitleChanged(int groupnumber, const QString& author, const QString& title)
@@ -964,7 +942,7 @@ void Widget::removeGroup(Group* g, bool fake)
         onAddClicked();
     }
     GroupList::removeGroup(g->getGroupId(), fake);
-    Nexus::getCore()->removeGroup(g->getGroupId(), fake);
+    Nexus::getProfile()->removeGroup(g->getGroupId(), fake);
     delete g;
     if (ui->mainHead->layout()->isEmpty())
         onAddClicked();
@@ -993,14 +971,14 @@ Group *Widget::createGroup(int groupId)
     layout->addWidget(newgroup->getGroupWidget());
     newgroup->getGroupWidget()->updateStatusLight();
 
-    Core* core = Nexus::getCore();
+    Core* prof = Nexus::getProfile();
     connect(settingsWidget, &SettingsWidget::compactToggled, newgroup->getGroupWidget(), &GenericChatroomWidget::onCompactChanged);
     connect(newgroup->getGroupWidget(), SIGNAL(chatroomWidgetClicked(GenericChatroomWidget*)), this, SLOT(onChatroomWidgetClicked(GenericChatroomWidget*)));
     connect(newgroup->getGroupWidget(), SIGNAL(removeGroup(int)), this, SLOT(removeGroup(int)));
     connect(newgroup->getGroupWidget(), SIGNAL(chatroomWidgetClicked(GenericChatroomWidget*)), newgroup->getChatForm(), SLOT(focusInput()));
-    connect(newgroup->getChatForm(), SIGNAL(sendMessage(int,QString)), core, SLOT(sendGroupMessage(int,QString)));
-    connect(newgroup->getChatForm(), SIGNAL(sendAction(int,QString)), core, SLOT(sendGroupAction(int,QString)));
-    connect(newgroup->getChatForm(), &GroupChatForm::groupTitleChanged, core, &Core::changeGroupTitle);
+    connect(newgroup->getChatForm(), SIGNAL(sendMessage(int,QString)), prof, SLOT(sendGroupMessage(int,QString)));
+    connect(newgroup->getChatForm(), SIGNAL(sendAction(int,QString)), prof, SLOT(sendGroupAction(int,QString)));
+    connect(newgroup->getChatForm(), &GroupChatForm::groupTitleChanged, prof, &Core::changeGroupTitle);
     return newgroup;
 }
 
@@ -1125,17 +1103,17 @@ void Widget::onTryCreateTrayIcon()
 
 void Widget::setStatusOnline()
 {
-    Nexus::getCore()->setStatus(Status::Online);
+    Nexus::getProfile()->setStatus(Status::Online);
 }
 
 void Widget::setStatusAway()
 {
-    Nexus::getCore()->setStatus(Status::Away);
+    Nexus::getProfile()->setStatus(Status::Away);
 }
 
 void Widget::setStatusBusy()
 {
-    Nexus::getCore()->setStatus(Status::Busy);
+    Nexus::getProfile()->setStatus(Status::Busy);
 }
 
 void Widget::onMessageSendResult(int friendId, const QString& message, int messageId)

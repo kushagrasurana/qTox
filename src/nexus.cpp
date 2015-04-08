@@ -23,8 +23,6 @@ Nexus::Nexus(QObject *parent) :
 Nexus::~Nexus()
 {
     delete profile;
-    delete coreThread;
-    delete avThread;
 #ifdef Q_OS_ANDROID
     delete androidgui;
 #else
@@ -53,16 +51,12 @@ void Nexus::start()
 
     // Create GUI
 #ifndef Q_OS_ANDROID
-    widget = Widget::getInstance();
+    widget = Nexus::getDesktopGUI();
 #endif
 
     // Create Profile
     QString profilePath = Settings::getInstance().detectProfile();
-    coreThread = new QThread(this);
-    coreThread->setObjectName("qTox Core");
     profile = new Profile(profilePath);
-    profile->moveToThread(coreThread);
-    connect(coreThread, &QThread::started, profile, &Profile::start);
 
     // Start GUI
 #ifdef Q_OS_ANDROID
@@ -172,4 +166,18 @@ bool Nexus::isFilePathWritable(const QString& filepath)
     bool writable = tmp.open(QIODevice::WriteOnly);
     tmp.remove();
     return writable;
+}
+
+QString Nexus::sanitize(QString name)
+{
+    // these are pretty much Windows banned filename characters
+    QList<QChar> banned = {'/', '\\', ':', '<', '>', '"', '|', '?', '*'};
+    for (QChar c : banned)
+        name.replace(c, '_');
+    // also remove leading and trailing periods
+    if (name[0] == '.')
+        name[0] = '_';
+    if (name.endsWith('.'))
+        name[name.length()-1] = '_';
+    return name;
 }

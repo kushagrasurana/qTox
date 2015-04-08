@@ -45,10 +45,10 @@ private slots:
     void onSendTriggered();
 
 private:
-    void setIdFromClipboard();
-    QLabel headLabel, toxIdLabel, messageLabel;
+    void setAddrFromClipboard();
+    QLabel headLabel, toxAddrLabel, messageLabel;
     QPushButton sendButton;
-    QLineEdit toxId;
+    QLineEdit toxAddr;
     QTextEdit message;
     QVBoxLayout layout, headLayout;
     QWidget *head, *main;

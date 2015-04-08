@@ -21,7 +21,7 @@
 #include "widget/gui.h"
 #include "src/misc/settings.h"
 
-Friend::Friend(int FriendId, const ToxID &UserId)
+Friend::Friend(int FriendId, const ToxAddr &UserId)
     : userName{Nexus::getProfile()->getPeerName(UserId)},
       userID{UserId}, friendId{FriendId}
 {
@@ -89,7 +89,7 @@ QString Friend::getDisplayedName() const
     return userAlias;
 }
 
-const ToxID &Friend::getToxID() const
+const ToxAddr &Friend::getToxAddr() const
 {
     return userID;
 }

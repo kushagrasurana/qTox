@@ -22,9 +22,10 @@
 #include <QTimer>
 #include <QVBoxLayout>
 #include "src/misc/qrwidget.h"
+#include "src/corestructs.h"
 
 class CroppingLabel;
-class Core;
+class Profile;
 class MaskablePixmapWidget;
 
 namespace Ui {
@@ -60,11 +61,9 @@ public slots:
     void onStatusSet(Status status);
 
 private slots:
-    void setToxId(const QString& id);
+    void setToxAddr(const QByteArray& addr);
     void copyIdClicked();
     void onAvatarClicked();
-    void onUserNameEdited();
-    void onStatusMessageEdited();
     void onLoadClicked();
     void onRenameClicked();
     void onExportClicked();
@@ -74,7 +73,6 @@ private slots:
     void disableSwitching();
     void enableSwitching();
     void on_copyQr_clicked();
-    
     void on_saveQr_clicked();
     
 protected:
@@ -86,7 +84,7 @@ private:
     Ui::IdentitySettings* bodyUI;
     MaskablePixmapWidget* profilePicture;
     QWidget *head;
-    Core* core;
+    Profile* prof;
     QTimer timer;
     bool hasCheck = false;
     QRWidget *qr;

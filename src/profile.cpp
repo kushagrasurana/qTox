@@ -17,7 +17,7 @@
 #include "profile.h"
 #include "toxcore.h"
 
-Profile::Profile(const QString& path)
+Profile::Profile(const QString& path, QThread)
 {
 
 }

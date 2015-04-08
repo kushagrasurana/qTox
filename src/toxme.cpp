@@ -54,13 +54,13 @@ QByteArray Toxme::prepareEncryptedJson(int action, QString payload)
     return json.toUtf8();
 }
 
-ToxID Toxme::lookup(QString address)
+ToxAddr Toxme::lookup(QString address)
 {
     // JSON injection ?
     address.replace('\\',"\\\\");
     address.replace('"',"\"");
 
-    ToxID id;
+    ToxAddr id;
     const QString json{"{\"action\":3,\"name\":\""+address+"\"}"};
     static const QByteArray pattern{"public_key\""};
 
@@ -80,7 +80,7 @@ ToxID Toxme::lookup(QString address)
         return id;
     response.truncate(idEnd);
 
-    id = ToxID::fromString(response);
+    id = ToxAddr::fromString(response);
     return id;
 }
 
@@ -106,7 +106,7 @@ int Toxme::extractError(QString json)
     return r;
 }
 
-bool Toxme::createAddress(ToxID id, QString address,
+bool Toxme::createAddress(ToxAddr id, QString address,
                               bool keepPrivate, QString bio)
 {
     int privacy = keepPrivate ? 0 : 2;
@@ -127,7 +127,7 @@ bool Toxme::createAddress(ToxID id, QString address,
     return (extractError(response) == 0);
 }
 
-bool Toxme::deleteAddress(ToxID id)
+bool Toxme::deleteAddress(ToxAddr id)
 {
     const QString payload{"{\"public_key\":\""+id.toString().left(64)+"\","
                           "\"timestamp\":"+QString().setNum(time(0))+"}"};

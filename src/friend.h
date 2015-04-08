@@ -47,7 +47,7 @@ signals:
     void displayedNameChanged(FriendWidget* widget, Status s, int hasNewEvents);
 
 private:
-    Profile* profile
+    Profile* profile;
     QString userAlias;
     int hasNewEvents;
     FriendWidget* widget;

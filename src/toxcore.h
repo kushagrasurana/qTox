@@ -53,6 +53,7 @@
 #include <QString>
 #include <QList>
 #include <QVariant>
+#include "corestructs.h"
 
 class ToxOptions
 {
@@ -67,6 +68,9 @@ public:
 };
 
 class ToxAv;
+
+#define TOXCORE_MAX_AVATAR_LENGTH (32 * 1<<10)
+// 32 KiB for now: TODO
 
 class ToxCore : public QObject
 {
@@ -121,15 +125,19 @@ public:
     // get your own nickname
     QString getSelfName() const;
 
+public slots:
     // set your own nickname, returns true on success (limited to TOX_MAX_NAME_LENGTH)
     bool setSelfName(const QString& name);
 
+public:
     // get your own status message
     QString getSelfStatusMessage() const;
 
+public slots:
     // set your own status message, returns true on success
     bool setSelfStatusMessage(const QString& status);
 
+public:
     // get your user status (online, busy, away)
     TOX_USER_STATUS getSelfStatus() const;
 
@@ -349,6 +357,13 @@ signals:
 
     // friend sent a custom packet
     void friendLosslessPacketReceived(uint32_t friend_number, QByteArray data);
+
+    // one custom signal for the GUI, emitted when this is constructed
+    void loaded(QByteArray address);
+
+signals: // dummy signals for how the ui currently operates. These should be removed. TODO
+    void usernameSet(QString name);
+    void statusMessageSet(QString msg);
 
 private:
     Tox* tox;

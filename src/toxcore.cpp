@@ -232,17 +232,21 @@ QString ToxCore::getSelfName() const
 
 bool ToxCore::setSelfName(const QString& name)
 {
+    bool ret;
     if (name.isEmpty())
     {
-        return QTOX_CALL_CORE(tox_self_set_name, TOX_ERR_SET_INFO_OK, tox, nullptr, 0);
+        ret = QTOX_CALL_CORE(tox_self_set_name, TOX_ERR_SET_INFO_OK, tox, nullptr, 0);
     }
     else
     {
         CString str(name);
         if (!CLAMP(str.size(), TOX_MAX_NAME_LENGTH, CLAMP_LTE))
             return false;
-        return QTOX_CALL_CORE(tox_self_set_name, TOX_ERR_SET_INFO_OK, tox, str.data(), str.size());
+        ret = QTOX_CALL_CORE(tox_self_set_name, TOX_ERR_SET_INFO_OK, tox, str.data(), str.size());
     }
+    if (ret)
+        emit usernameSet(name); // TODO: remove
+    return ret;
 }
 
 QString ToxCore::getSelfStatusMessage() const
@@ -255,17 +259,21 @@ QString ToxCore::getSelfStatusMessage() const
 
 bool ToxCore::setSelfStatusMessage(const QString& status)
 {
+    bool ret;
     if (status.isEmpty())
     {
-        return QTOX_CALL_CORE(tox_self_set_status_message, TOX_ERR_SET_INFO_OK, tox, nullptr, 0);
+        ret = QTOX_CALL_CORE(tox_self_set_status_message, TOX_ERR_SET_INFO_OK, tox, nullptr, 0);
     }
     else
     {
         CString str(status);
         if (!CLAMP(str.size(), TOX_MAX_STATUS_MESSAGE_LENGTH, CLAMP_LTE))
             return false;
-        return QTOX_CALL_CORE(tox_self_set_status_message, TOX_ERR_SET_INFO_OK, tox, str.data(), str.size());
+        ret = QTOX_CALL_CORE(tox_self_set_status_message, TOX_ERR_SET_INFO_OK, tox, str.data(), str.size());
     }
+    if (ret)
+        emit statusMessageSet(status); // TODO: remove
+    return ret;
 }
 
 TOX_USER_STATUS ToxCore::getSelfStatus() const
@@ -743,6 +751,10 @@ ToxCore::ToxCore(const ToxOptions& options, const QByteArray& data)
     tox_callback_group_namelist_change(tox, _groupNamelistChanged, this);
     tox_callback_friend_lossy_packet(tox, _friendLossyPacketReceived, this);
     tox_callback_friend_lossless_packet(tox, _friendLosslessPacketReceived, this);
+
+    emit loaded(getSelfAddress());
+    emit usernameSet(getSelfName()); // TODO: remove
+    emit statusMessageSet(getSelfStatusMessage()); // TODO: remove
 }
 
 TOX_ERR_NEW ToxCore::constructorError() const

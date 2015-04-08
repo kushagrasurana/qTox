@@ -17,33 +17,40 @@
 #ifndef PROFILE_H
 #define PROFILE_H
 
+#include <QThread>
 #include "toxcore.h"
 
-class ToxCore;
 class ToxAv;
+class LocalFileEncryptor;
 class Friend;
 class Group;
 template<class K, class V> class QHash;
 
-/* No other class besides this one should call any Profile::tox functions
-   directly, due to threading issues. Instead emit a signal and connect
-   that to whatever slot on ToxCore. */
+/* No other class should call any Profile->tox or Profile->toxav
+   functions directly, due to threading issues. Instead emit a signal and connect
+   that to whatever slot on ToxCore/ToxAv. */
 
 class Profile : public QObject
 {
     Q_OBJECT
 
 public:
-    Profile::Profile(const QString& profile);
+    Profile(const QString& profile);
 
-    ToxCore* tox;
-    ToxAv* toxav; // this object lives in a different thread
+    ToxCore* tox; // this object lives in the Nexus::coreThread
+    ToxAv* toxav; // this object lives in the Nexus::avThread
+    LocalFileEncryptor* encmgr;
+
+    void saveConfiguration();
 
 signals:
     void badProxy();
     void failedToStart();
 
 private:
+    QThread coreThread;
+    QThread avThread;
+
     QHash<int, Friend> friendsList;
     QHash<int, Group*> groupList;
 };

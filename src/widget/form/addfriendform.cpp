@@ -23,7 +23,7 @@
 #include <tox/tox.h>
 #include "ui_mainwindow.h"
 #include "src/nexus.h"
-#include "src/misc/cdata.h"
+#include "src/profile.h"
 #include "src/toxdns.h"
 #include "src/misc/settings.h"
 #include "src/widget/gui.h"
@@ -36,13 +36,13 @@ AddFriendForm::AddFriendForm()
     headLabel.setText(tr("Add Friends"));
     headLabel.setFont(bold);
 
-    toxIdLabel.setText(tr("Tox ID","Tox ID of the person you're sending a friend request to"));
+    toxAddrLabel.setText(tr("Tox ID","Tox ID of the person you're sending a friend request to"));
     messageLabel.setText(tr("Message","The message you send in friend requests"));
     sendButton.setText(tr("Send friend request"));
 
     main->setLayout(&layout);
-    layout.addWidget(&toxIdLabel);
-    layout.addWidget(&toxId);
+    layout.addWidget(&toxAddrLabel);
+    layout.addWidget(&toxAddr);
     layout.addWidget(&messageLabel);
     layout.addWidget(&message);
     layout.addWidget(&sendButton);
@@ -50,9 +50,9 @@ AddFriendForm::AddFriendForm()
     head->setLayout(&headLayout);
     headLayout.addWidget(&headLabel);
 
-    connect(&toxId,&QLineEdit::returnPressed, this, &AddFriendForm::onSendTriggered);
+    connect(&toxAddr,&QLineEdit::returnPressed, this, &AddFriendForm::onSendTriggered);
     connect(&sendButton, SIGNAL(clicked()), this, SLOT(onSendTriggered()));
-    connect(Nexus::getCore(), &Core::usernameSet, this, &AddFriendForm::onUsernameSet);
+    connect(Nexus::getProfile()->tox, &ToxCore::usernameSet, this, &AddFriendForm::onUsernameSet); // TODO: core shouldn't be emitting a dummy signal
 }
 
 AddFriendForm::~AddFriendForm()
@@ -67,8 +67,8 @@ void AddFriendForm::show(Ui::MainWindow &ui)
     ui.mainHead->layout()->addWidget(head);
     main->show();
     head->show();
-    setIdFromClipboard();
-    toxId.setFocus();
+    setAddrFromClipboard();
+    toxAddr.setFocus();
 }
 
 QString AddFriendForm::getMessage() const
@@ -84,16 +84,19 @@ void AddFriendForm::onUsernameSet(const QString& username)
 
 void AddFriendForm::onSendTriggered()
 {
-    QString id = toxId.text().trimmed();
+    QString addr = toxAddr.text().trimmed();
 
-    if (id.isEmpty()) {
+    if (addr.isEmpty())
+    {
         GUI::showWarning(tr("Couldn't add friend"), tr("Please fill in a valid Tox ID","Tox ID of the friend you're sending a friend request to"));
-    } else if (ToxID::isToxId(id)) {
-        if (id.toUpper() == Nexus::getProfile()->getSelfId().toString().toUpper())
+    }
+    else if (ToxAddr::isToxAddr(addr))
+    {
+        if (addr.toUpper() == ToxAddr::toHexString(Nexus::getProfile()->tox->getSelfPublicKey())) //TODO thread safety
             GUI::showWarning(tr("Couldn't add friend"), tr("You can't add yourself as a friend!","When trying to add your own Tox ID as friend"));
         else
-            emit friendRequested(id, getMessage());
-        this->toxId.clear();
+            emit friendRequested(addr, getMessage());
+        this->toxAddr.clear();
         this->message.clear();
     } else {
         if (Settings::getInstance().getProxyType() != ProxyType::ptNone)
@@ -104,26 +107,27 @@ Ignore the proxy and connect to the Internet directly?"), QMessageBox::Yes|QMess
                 return;
         }
 
-        ToxID toxId = ToxDNS::resolveToxAddress(id, true);
+        ToxAddr toxAddr(ToxDNS::resolveToxAddress(addr, true));
 
-        if (toxId.toString().isEmpty())
+        if (toxAddr.toString().isEmpty())
         {
             GUI::showWarning(tr("Couldn't add friend"), tr("This Tox ID does not exist","DNS error"));
             return;
         }
 
-        emit friendRequested(toxId.toString(), getMessage());
-        this->toxId.clear();
+        emit friendRequested(toxAddr.toString(), getMessage());
+        this->toxAddr.clear();
         this->message.clear();
     }
 }
 
-void AddFriendForm::setIdFromClipboard()
+void AddFriendForm::setAddrFromClipboard()
 {
     QClipboard* clipboard = QApplication::clipboard();
-    QString id = clipboard->text().trimmed();
-    if (Nexus::getProfile()->isReady() && !id.isEmpty() && ToxID::isToxId(id)) {
-        if (!ToxID::fromString(id).isMine())
-            toxId.setText(id);
+    QString addr = clipboard->text().trimmed();
+    // TODO COMPILE CHECK
+    if (/*Nexus::getProfile()->isReady() &&*/ !addr.isEmpty() && ToxAddr::isToxAddr(addr)) {
+        if (addr.toUpper() == ToxAddr::toHexString(Nexus::getProfile()->tox->getSelfPublicKey())) //TODO thread safety
+            toxAddr.setText(addr);
     }
 }

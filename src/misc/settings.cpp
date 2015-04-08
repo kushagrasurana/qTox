@@ -72,7 +72,7 @@ QString Settings::detectProfile()
 {
     QDir dir(getSettingsDirPath());
     QString path, profile = getCurrentProfile();
-    path = dir.filePath(profile + Core::TOX_EXT);
+    path = dir.filePath(profile + ".tox");
     QFile file(path);
     if (profile.isEmpty() || !file.exists())
     {
@@ -94,7 +94,7 @@ QString Settings::detectProfile()
             else
             {
                 switchProfile(profile);
-                return dir.filePath(profile + Core::TOX_EXT);
+                return dir.filePath(profile + ".tox");
             }
         }
     }
@@ -314,7 +314,7 @@ void Settings::load()
                 fp.addr = ps.value("addr").toString();
                 fp.alias = ps.value("alias").toString();
                 fp.autoAcceptDir = ps.value("autoAcceptDir").toString();
-                friendLst[ToxID::fromString(fp.addr).publicKey] = fp;
+                friendLst[ToxAddr::fromString(fp.addr).publicKey] = fp;
             }
             ps.endArray();
         ps.endGroup();
@@ -842,7 +842,7 @@ void Settings::setAutoAwayTime(int newValue)
     autoAwayTime = newValue;
 }
 
-QString Settings::getAutoAcceptDir(const ToxID& id) const
+QString Settings::getAutoAcceptDir(const ToxAddr& id) const
 {
     QString key = id.publicKey;
 
@@ -855,7 +855,7 @@ QString Settings::getAutoAcceptDir(const ToxID& id) const
     return QString();
 }
 
-void Settings::setAutoAcceptDir(const ToxID &id, const QString& dir)
+void Settings::setAutoAcceptDir(const ToxAddr &id, const QString& dir)
 {
     QString key = id.publicKey;
 
@@ -1106,7 +1106,7 @@ void Settings::setCamVideoRes(QSize newValue)
 
 QString Settings::getFriendAdress(const QString &publicKey) const
 {
-    QString key = ToxID::fromString(publicKey).publicKey;
+    QString key = ToxAddr::fromString(publicKey).publicKey;
     auto it = friendLst.find(key);
     if (it != friendLst.end())
     {
@@ -1118,7 +1118,7 @@ QString Settings::getFriendAdress(const QString &publicKey) const
 
 void Settings::updateFriendAdress(const QString &newAddr)
 {
-    QString key = ToxID::fromString(newAddr).publicKey;
+    QString key = ToxAddr::fromString(newAddr).publicKey;
     auto it = friendLst.find(key);
     if (it != friendLst.end())
     {
@@ -1132,7 +1132,7 @@ void Settings::updateFriendAdress(const QString &newAddr)
     }
 }
 
-QString Settings::getFriendAlias(const ToxID &id) const
+QString Settings::getFriendAlias(const ToxAddr &id) const
 {
     QString key = id.publicKey;
     auto it = friendLst.find(key);
@@ -1144,7 +1144,7 @@ QString Settings::getFriendAlias(const ToxID &id) const
     return QString();
 }
 
-void Settings::setFriendAlias(const ToxID &id, const QString &alias)
+void Settings::setFriendAlias(const ToxAddr &id, const QString &alias)
 {
     QString key = id.publicKey;
     auto it = friendLst.find(key);
@@ -1160,7 +1160,7 @@ void Settings::setFriendAlias(const ToxID &id, const QString &alias)
     }
 }
 
-void Settings::removeFriendSettings(const ToxID &id)
+void Settings::removeFriendSettings(const ToxAddr &id)
 {
     QString key = id.publicKey;
     friendLst.remove(key);
